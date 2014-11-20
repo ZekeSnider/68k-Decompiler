@@ -13,10 +13,10 @@
 
 EA_NEG                              ;Parsing EA for NEG function
 
-      JSR         BitMask3to5       ;isolating destination address mode
+      BSR         BitMask3to5       ;isolating destination address mode
       MOVE.L      D1,D2             ;moving return value to D2
 
-      JSR         BitMask0to2       ;isloating destination address register
+      BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D1,D3             ;Moving return value to D3
 
       CMP.L       %001,D2           ;Register direct is not a valid input for NEG
@@ -24,7 +24,7 @@ EA_NEG                              ;Parsing EA for NEG function
 
       JSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
 
-      RTS                           ;Returning to source
+      BSR                           ;Returning to source
 
 
 *These functions are called when the EA Mode matches.
@@ -34,20 +34,20 @@ EA_PARSE_Dn
       JSR         EA_PARSE_REGISTER
       MOVE.W      #'D',(A0)+
       MOVE.W      D4,(A0)+
-      RTS
+      BSR
 
 EA_PARSE_An
       JSR         EA_PARSE_REGISTER
       MOVE.W      #'A',(A0)+
       MOVE.W      D4,(A0)+
-      RTS
+      BSR
 
 EA_PARSE_INDIRECT_An
       MOVE.W      #'(',(A0)+
       MOVE.W      #'A',(A0)+
       MOVE.W      D4,(A0)+
       MOVE.W      #')',(A0)+
-      RTS
+      BSR
 
 EA_PARSE_INDIRECT_INCREMENT_An
       MOVE.W      #'(',(A0)+
@@ -55,7 +55,7 @@ EA_PARSE_INDIRECT_INCREMENT_An
       MOVE.W      D4,(A0)+
       MOVE.W      #')',(A0)+
       MOVE.W      #'+',(A0)+
-      RTS
+      BSR
 
 EA_PARSE_INDIRECT_DECREMENT_An
       MOVE.W      #'-',(A0)+
@@ -63,9 +63,9 @@ EA_PARSE_INDIRECT_DECREMENT_An
       MOVE.W      #'A',(A0)+
       MOVE.W      D4,(A0)+
       MOVE.W      #')',(A0)+
-      RTS
+      BSR
 
-EA_PARSE_REGISTER                   ;Converts a register number to decimal and stores to D4  
+EA_PARSE_REGISTER                   ;ConveBSR a register number to decimal and stores to D4  
 
       CMP.W       D3,%000
       MOVE.W      #0,D4
@@ -91,7 +91,7 @@ EA_PARSE_REGISTER                   ;Converts a register number to decimal and s
       CMP.W       D3,%111
       MOVE.W      #7,D4
 
-      RTS
+      BSR
 
 EA_PARSE_MODE                       ;Finds correct function to parse the EA Mode 
       CMP.W       D2,%000
@@ -110,7 +110,7 @@ EA_PARSE_MODE                       ;Finds correct function to parse the EA Mode
       JSR EA_PARSE_INDIRECT_DECREMENT_An
 
 
-      RTS
+      BSR
 
 ERROR
       *TODO: handle illegal inputs
