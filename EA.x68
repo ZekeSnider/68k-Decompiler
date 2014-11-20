@@ -22,32 +22,32 @@ EA_NEG                              ;Parsing EA for NEG function
       CMP.L       %001,D2           ;Register direct is not a valid input for NEG
       BRA         ERROR
 
-      JSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
+      BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
 
-      BSR                           ;Returning to source
+      RTS                           ;Returning to source
 
 
 *These functions are called when the EA Mode matches.
 *They store the human ouput code to the A0 register, then increment it.
 *Then return to where they were called from.
 EA_PARSE_Dn
-      JSR         EA_PARSE_REGISTER
+      BSR         EA_PARSE_REGISTER
       MOVE.W      #'D',(A0)+
       MOVE.W      D4,(A0)+
-      BSR
+      RTS
 
 EA_PARSE_An
-      JSR         EA_PARSE_REGISTER
+      BSR         EA_PARSE_REGISTER
       MOVE.W      #'A',(A0)+
       MOVE.W      D4,(A0)+
-      BSR
+      RTS
 
 EA_PARSE_INDIRECT_An
       MOVE.W      #'(',(A0)+
       MOVE.W      #'A',(A0)+
       MOVE.W      D4,(A0)+
       MOVE.W      #')',(A0)+
-      BSR
+      RTS
 
 EA_PARSE_INDIRECT_INCREMENT_An
       MOVE.W      #'(',(A0)+
@@ -55,7 +55,7 @@ EA_PARSE_INDIRECT_INCREMENT_An
       MOVE.W      D4,(A0)+
       MOVE.W      #')',(A0)+
       MOVE.W      #'+',(A0)+
-      BSR
+      RTS
 
 EA_PARSE_INDIRECT_DECREMENT_An
       MOVE.W      #'-',(A0)+
@@ -63,7 +63,7 @@ EA_PARSE_INDIRECT_DECREMENT_An
       MOVE.W      #'A',(A0)+
       MOVE.W      D4,(A0)+
       MOVE.W      #')',(A0)+
-      BSR
+      RTS
 
 EA_PARSE_REGISTER                   ;ConveBSR a register number to decimal and stores to D4  
 
@@ -91,26 +91,26 @@ EA_PARSE_REGISTER                   ;ConveBSR a register number to decimal and s
       CMP.W       D3,%111
       MOVE.W      #7,D4
 
-      BSR
+      RTS
 
 EA_PARSE_MODE                       ;Finds correct function to parse the EA Mode 
       CMP.W       D2,%000
-      JSR EA_PARSE_An
+      BSR EA_PARSE_An
 
       CMP.W       D2,%001
-      JSR EA_PARSE_Dn
+      BSR EA_PARSE_Dn
 
       CMP.W       D2,%010
-      JSR EA_PARSE_INDIRECT_An
+      BSR EA_PARSE_INDIRECT_An
 
       CMP.W       D2,%011
-      JSR EA_PARSE_INDIRECT_INCREMENT_An
+      BSR EA_PARSE_INDIRECT_INCREMENT_An
 
       CMP.W       D2,%100
-      JSR EA_PARSE_INDIRECT_DECREMENT_An
+      BSR EA_PARSE_INDIRECT_DECREMENT_An
 
 
-      BSR
+      RTS
 
 ERROR
       *TODO: handle illegal inputs
