@@ -8,7 +8,6 @@
 *D0 is assumed to be input line
 *Assuming D2 is Addressing Mode
 *Assuming D3 is Register
-*D4 stores register as decimal number
 *D7 is used to store return values
 
 *Input: D0 (Input Line)
@@ -29,6 +28,8 @@ EA_NEG                              ;Parsing EA for NEG function
 
       BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
 
+      MOVE.B      #0,(A0)+          ;Terminating character
+
       RTS                           ;Returning to source
 
 
@@ -37,7 +38,6 @@ EA_NEG                              ;Parsing EA for NEG function
 *D7 is used to store the return value from the BitMasks
 *Assuming D2 is EA Addressing Mode
 *Assuming D3 is EA Register
-*D4 stores register as decimal number
 *D5 stores register
 
 *Input: D0 (input Line)
@@ -58,6 +58,8 @@ EA_OR                              ;Parsing EA for OR function
 
       CMP.B       D1,#2             ;if the OPMode is type 2, the EA is the destination
       BSR         EA_OR_SOURCE
+
+      MOVE.B      #0,(A0)+          ;Terminating character
 
       RTS                           ;Returning to source
 
@@ -122,6 +124,8 @@ EA_ORI                              ;Parsing EA for ORI function
 
       BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
 
+      MOVE.B      #0,(A0)+          ;Terminating character
+
       RTS                           ;Returning to source
 
 
@@ -144,10 +148,15 @@ EA_AND                              ;Parsing EA for AND function
       CMP.B       D1,#2             ;if the OPMode is type 2, the EA is the destination
       BSR         EA_AND_SOURCE
 
+      MOVE.B      #0,(A0)+          ;Terminating character
+
       RTS                           ;Returning to source
 
 *Called if the EA address field is a source operand
 EA_AND_SOURCE
+
+      CMP.L       %001,D2           ;Address register direct is not a valid input for EA source
+      BRA         ERROR
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
@@ -182,6 +191,31 @@ EA_AND_DESTINATION
 
 EA_ANDI                             ;Parsing EA for ANDI function
 
+      BSR         BitMask3to5       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating destination address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_IMMEDIATE_DATA          
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
+      BRA         ERROR
+
+      MOVE.L      D5,D7
+      BSR         EA_PARSE_MODE       ;outputting Address register destination
+
+      RTS                           ;Returning to source
+
+*Input: D0 (input Line)
+*Input: D1 (OPMOde type (1 or 2))
+*Input: D2 (Isbyte (0 or 1))
+EA_SUB                              ;Parsing EA for AND function
+      MOVE.L      D2,D4             ;moving isbyte variable to D4
+
       BSR         BitMask9to11      ;isolating register number
       MOVE.L      D7,D5             ;moving return value to D5
 
@@ -191,16 +225,77 @@ EA_ANDI                             ;Parsing EA for ANDI function
       BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      BSR         EA_PARSE_MODE     ;outputting EA source           
+      CMP.B       D1,#1             ;if the OPMode is type 1, the EA is the source
+      BSR         EA_AND_SOURCE      
+
+      CMP.B       D1,#2             ;if the OPMode is type 2, the EA is the destination
+      BSR         EA_AND_SOURCE
+
+      MOVE.B      #0,(A0)+          ;Terminating character
+
+      RTS                           ;Returning to source
+
+*Called if the EA address field is a source operand
+EA_SUB_SOURCE
+
+      CMP.L       %000,D2           ;Address register direct is not a valid input for EA source
+      CMP.L       #1,D4             ;if it is a byte-sized operation
+      BRA         ERROR
+
+      BSR         EA_PARSE_MODE     ;outputing the source EA
 
       MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.W      #' ',(A0)+
 
+      MOVE.L      D5,D7             ;Moving register number to D7
+      BSR         EA_PARSE_Dn       ;Outputting register
+
+      RTS
+
+*Called if the EA address field is a destinaton operand
+EA_SUB_DESTINATION
+      CMP.L       %000,D2           ;Data register direct is not a valid input for EA destinaton
+      BRA         ERROR
+
+      CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
+      BRA         ERROR
+
+      MOVE.L      D3,D6             ;backing up EA register to D6
+      MOVE.L      D5,D7             ;Moving register number to D3
+      BSR         EA_PARSE_Dn       ;Outputting register
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      MOVE.L      D6,D7             ;Moving EA register back
+      BSR         EA_PARSE_MODE     ;outputing the destination EA
+
+
+      RTS
+
+*Input: D0 (input Line)
+*Input: D1 (Isbyte (0 or 1))
+EA_SUBQ                             ;Parsing EA for SUBQ function
+
+      BSR         BitMask3to5       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating destination address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_IMMEDIATE_DATA          
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      CMP.L       #1,D1             ;Address register direct is not a valid input for EA destinaton
+      CMP.L       %001,D2           ;if it is a byte-operation
+      BRA         ERROR
+      
       MOVE.L      D5,D7
-      BSR         EA_PARSE_An       ;outputting Address register destination
+      BSR         EA_PARSE_MODE       ;outputting Address register destination
 
       RTS                           ;Returning to source
-
 
 *Finds correct function to parse the EA Mode 
 *Input: D2 (EA Mode)
@@ -230,6 +325,7 @@ EA_PARSE_MODE
 
 
 *Input: D3 (Register Address number)
+*Uses:  D7
 *Output: A0
 EA_PARSE_Dn
       BSR         EA_PARSE_REGISTER
@@ -272,7 +368,7 @@ EA_PARSE_INDIRECT_DECREMENT_An
 EA_PARSE_IMMEDIATE_DATA
 
 EA_PARSE_ABSOLUTE_LONG_ADDRESS
-
+      
 EA_PARSE_ABSOLUTE_WORD_ADDRESS
 
 EA_PARSE_DISPLAY_IMMEDIATE_DATA
