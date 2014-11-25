@@ -53,10 +53,11 @@ EA_OR                              ;Parsing EA for OR function
       BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
+      CMP.B       D1,#1             ;if the OPMode is type 1, the EA is the source
+      BSR         EA_OR_SOURCE      
 
-
-
-      BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
+      CMP.B       D1,#2             ;if the OPMode is type 2, the EA is the destination
+      BSR         EA_OR_SOURCE
 
       RTS                           ;Returning to source
 
@@ -137,10 +138,11 @@ EA_AND                              ;Parsing EA for AND function
       BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
+      CMP.B       D1,#1             ;if the OPMode is type 1, the EA is the source
+      BSR         EA_AND_SOURCE      
 
-
-
-      BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
+      CMP.B       D1,#2             ;if the OPMode is type 2, the EA is the destination
+      BSR         EA_AND_SOURCE
 
       RTS                           ;Returning to source
 
@@ -201,7 +203,8 @@ EA_ANDI                             ;Parsing EA for ANDI function
 
 
 *Finds correct function to parse the EA Mode 
-*Input: D2
+*Input: D2 (EA Mode)
+*Input: D3 (EA Register Number)
 EA_PARSE_MODE                       
       CMP.W       D2,%000
       BSR         EA_PARSE_An
@@ -225,7 +228,8 @@ EA_PARSE_MODE
 *They store the human ouput code to the A0 register, then increment it.
 *Then return to where they were called from.
 
-*Input: D7 (Register Address number)
+
+*Input: D3 (Register Address number)
 *Output: A0
 EA_PARSE_Dn
       BSR         EA_PARSE_REGISTER
@@ -240,6 +244,7 @@ EA_PARSE_An
       RTS
 
 EA_PARSE_INDIRECT_An
+      BSR         EA_PARSE_REGISTER
       MOVE.W      #'(',(A0)+
       MOVE.W      #'A',(A0)+
       MOVE.W      D7,(A0)+
@@ -247,6 +252,7 @@ EA_PARSE_INDIRECT_An
       RTS
 
 EA_PARSE_INDIRECT_INCREMENT_An
+      BSR         EA_PARSE_REGISTER
       MOVE.W      #'(',(A0)+
       MOVE.W      #'A',(A0)+
       MOVE.W      D7,(A0)+
@@ -255,6 +261,7 @@ EA_PARSE_INDIRECT_INCREMENT_An
       RTS
 
 EA_PARSE_INDIRECT_DECREMENT_An
+      BSR         EA_PARSE_REGISTER
       MOVE.W      #'-',(A0)+
       MOVE.W      #'(',(A0)+
       MOVE.W      #'A',(A0)+
@@ -270,8 +277,9 @@ EA_PARSE_ABSOLUTE_WORD_ADDRESS
 
 EA_PARSE_DISPLAY_IMMEDIATE_DATA
 
+
 *Converts a register number to decimal and stores to D7 
-*Input:  D3
+*Input:  D3 (Register Number)
 *Output: D7 
 EA_PARSE_REGISTER                   
 
