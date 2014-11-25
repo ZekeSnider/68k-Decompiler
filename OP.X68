@@ -8,32 +8,49 @@
 START:                  ; first instruction of program
 
 * Put program code here
+            NOP
             LEA     cur_address,A5   *Load start address
             LEA     test_end,A6     *Load end address
         
-loop        BSR     getdata         *Gets the data at add
+loop        MOVE.W  (A5),D0         *Gets the data of where the pointer is at
+            BSR     getOP           *Gets the data at add
             ADDQ.W  #byte,A5        *Incrementing the pointer one word
             CMPA.W  A6,A5           *Seeing if we're at end of the search area
             BGT     end_search      *go to end if we leave search area
             BRA     loop            *else go back to the beginning of the loop
-        
+            
+getOP       MOVE.W  D0,D2           *Moves data to D2 to use
+            CMP.W   #nop_code,D2     *Compares to NOP
+            BEQ     isNOP           *Skips the return if it is NOP
+            
+            BSR     outaddress      *Data unknown, just print the address
+            BSR     isData          *And then the data
+endOP       RTS                     *Returns to caller
 
-getdata     MOVE.W  (A5),D0         *Gets the data of where the pointer is at
-            BSR     output          *Outputs the data
-            RTS                     *Returns to caller
+isNOP       BSR     outaddress      *prints current address
+            LEA     NOPstring,A1    *Loads NOPstring for printing
+            MOVE.B  #13,D0          *Sets up trap
+            TRAP    #15
+            BRA     endOP
+            
+            
 
 output      MOVE.W  D0,D2           *Moves data to D2
             CLR.W   D0              *Clears D0
+            BSR     outaddress      *prints
+            
 *prints address
-            MOVE.W  D2,-(sp)        *Saves D2
+outaddress  MOVE.W  D2,-(sp)        *Saves D2
             MOVE.W  A5,D2           *Moves current address to D2
             BSR     n2ascii         *prints current address
             MOVE.W  (sp)+,D2        *Loads D2
             MOVE.B  space,D1        *Loads ascii space in D1
-*prints word 'DATA '
             MOVE.B  #6,D0           *Sets up trap
             TRAP    #15
-            LEA     datastring,A1   *Loads datastring for printing
+            RTS
+            
+*prints word 'DATA '            
+isData      LEA     datastring,A1   *Loads datastring for printing
             MOVE.B  #14,D0          *Sets up Trap
             TRAP    #15
 *prints the data
@@ -42,9 +59,9 @@ output      MOVE.W  D0,D2           *Moves data to D2
             MOVE.B  #14,D0
             TRAP    #15
             RTS
-*********************************************
+**************************************************
 *Takes the word hex in D2 and prints it to screen*
-*********************************************
+**************************************************
 
 n2ascii     MOVE.B  #12,D4          *Sets up D4 as counter.
 n2ascii2    MOVE.W  D2,D3           *Moves to D3 to work on there 
@@ -153,14 +170,15 @@ newline     DC.B    CR,LF,0     *New Line
 byte        EQU     2           *How much to move the search address.
                                 *2 bytes because we're searching for a word
 cur_address EQU     $00001000   *Start of search
-test_end    EQU     $00001100   *End of search
+test_end    EQU     $00001010   *End of search
 mydata      REG     D0-D7/A0-A6  *Used for pushing registers to stack
 datastring  DC.B    'DATA ',0   *Data string
-
+NOPstring   DC.B    'NOP',0     *NOP string
 nop_code    EQU     $4E71
 
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~

@@ -1,0 +1,231 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.02
+Created On: 11/25/2014 2:52:51 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :
+00000000                             3  * Written by :
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00001000                             7      ORG    $1000
+00001000                             8  START:                  ; first instruction of program
+00001000                             9  
+00001000                            10  * Put program code here
+00001000  4E71                      11              NOP
+00001002  4BF9 00001000             12              LEA     cur_address,A5   *Load start address
+00001008  4DF9 00001010             13              LEA     test_end,A6     *Load end address
+0000100E                            14          
+0000100E  3015                      15  loop        MOVE.W  (A5),D0         *Gets the data of where the pointer is at
+00001010  6100 000C                 16              BSR     getOP           *Gets the data at add
+00001014  544D                      17              ADDQ.W  #byte,A5        *Incrementing the pointer one word
+00001016  BACE                      18              CMPA.W  A6,A5           *Seeing if we're at end of the search area
+00001018  6E00 01AA                 19              BGT     end_search      *go to end if we leave search area
+0000101C  60F0                      20              BRA     loop            *else go back to the beginning of the loop
+0000101E                            21              
+0000101E  3400                      22  getOP       MOVE.W  D0,D2           *Moves data to D2 to use
+00001020  B47C 4E71                 23              CMP.W   #nop_code,D2     *Compares to NOP
+00001024  6700 000C                 24              BEQ     isNOP           *Skips the return if it is NOP
+00001028  6100 0022                 25              BSR     outaddress      *Data unknown, just print the address
+0000102C  6100 0036                 26              BSR     isData          *And then the data
+00001030  4E75                      27  endOP       RTS                     *Returns to caller
+00001032                            28  
+00001032  6100 0018                 29  isNOP       BSR     outaddress      *prints current address
+00001036  43F9 000011D2             30              LEA     NOPstring,A1    *Loads NOPstring for printing
+0000103C  103C 000D                 31              MOVE.B  #13,D0          *Sets up trap
+00001040  4E4F                      32              TRAP    #15
+00001042  60EC                      33              BRA     endOP
+00001044                            34              
+00001044                            35              
+00001044                            36  
+00001044  3400                      37  output      MOVE.W  D0,D2           *Moves data to D2
+00001046  4240                      38              CLR.W   D0              *Clears D0
+00001048  6100 0002                 39              BSR     outaddress      *prints
+0000104C                            40              
+0000104C                            41  *prints address
+0000104C  3F02                      42  outaddress  MOVE.W  D2,-(sp)        *Saves D2
+0000104E  340D                      43              MOVE.W  A5,D2           *Moves current address to D2
+00001050  6100 0030                 44              BSR     n2ascii         *prints current address
+00001054  341F                      45              MOVE.W  (sp)+,D2        *Loads D2
+00001056  1239 000011C8             46              MOVE.B  space,D1        *Loads ascii space in D1
+0000105C  103C 0006                 47              MOVE.B  #6,D0           *Sets up trap
+00001060  4E4F                      48              TRAP    #15
+00001062  4E75                      49              RTS
+00001064                            50              
+00001064                            51  *prints word 'DATA '            
+00001064  43F9 000011CC             52  isData      LEA     datastring,A1   *Loads datastring for printing
+0000106A  103C 000E                 53              MOVE.B  #14,D0          *Sets up Trap
+0000106E  4E4F                      54              TRAP    #15
+00001070                            55  *prints the data
+00001070  6100 0010                 56              BSR     n2ascii         *Prints out the data
+00001074  43F9 000011C9             57              LEA     newline,A1      *Sets up trap for new line
+0000107A  103C 000E                 58              MOVE.B  #14,D0
+0000107E  4E4F                      59              TRAP    #15
+00001080  4E75                      60              RTS
+00001082                            61  **************************************************
+00001082                            62  *Takes the word hex in D2 and prints it to screen*
+00001082                            63  **************************************************
+00001082                            64  
+00001082  183C 000C                 65  n2ascii     MOVE.B  #12,D4          *Sets up D4 as counter.
+00001086  3602                      66  n2ascii2    MOVE.W  D2,D3           *Moves to D3 to work on there 
+00001088  E86B                      67              LSR.W   D4,D3           
+0000108A  0243 000F                 68              ANDI.W  #$000F,D3       *Masks to check last nibble
+0000108E  B63C 0000                 69              CMP.B   #$0,D3          *Chekcs if D3 is equal to 0
+00001092  6700 0086                 70              BEQ     print0
+00001096  B63C 0001                 71              CMP.B   #$1,D3          *Chekcs if D3 is equal to 1
+0000109A  6700 0088                 72              BEQ     print1
+0000109E  B63C 0002                 73              CMP.B   #$2,D3          *Chekcs if D3 is equal to 2
+000010A2  6700 008A                 74              BEQ     print2
+000010A6  B63C 0003                 75              CMP.B   #$3,D3          *Chekcs if D3 is equal to 3
+000010AA  6700 008C                 76              BEQ     print3
+000010AE  B63C 0004                 77              CMP.B   #$4,D3          *Chekcs if D3 is equal to 4
+000010B2  6700 008E                 78              BEQ     print4
+000010B6  B63C 0005                 79              CMP.B   #$5,D3          *Chekcs if D3 is equal to 5
+000010BA  6700 0090                 80              BEQ     print5
+000010BE  B63C 0006                 81              CMP.B   #$6,D3          *Chekcs if D3 is equal to 6
+000010C2  6700 0092                 82              BEQ     print6
+000010C6  B63C 0007                 83              CMP.B   #$7,D3          *Chekcs if D3 is equal to 7
+000010CA  6700 0094                 84              BEQ     print7
+000010CE  B63C 0008                 85              CMP.B   #$8,D3          *Chekcs if D3 is equal to 8
+000010D2  6700 0096                 86              BEQ     print8
+000010D6  B63C 0009                 87              CMP.B   #$9,D3          *Chekcs if D3 is equal to 9
+000010DA  6700 0098                 88              BEQ     print9
+000010DE  B63C 000A                 89              CMP.B   #$A,D3          *Chekcs if D3 is equal to A
+000010E2  6700 009A                 90              BEQ     printA
+000010E6  B63C 000B                 91              CMP.B   #$B,D3          *Chekcs if D3 is equal to B
+000010EA  6700 009C                 92              BEQ     printB
+000010EE  B63C 000C                 93              CMP.B   #$C,D3          *Chekcs if D3 is equal to C
+000010F2  6700 009E                 94              BEQ     printC
+000010F6  B63C 000D                 95              CMP.B   #$D,D3          *Chekcs if D3 is equal to D
+000010FA  6700 00A0                 96              BEQ     printD
+000010FE  B63C 000E                 97              CMP.B   #$E,D3          *Chekcs if D3 is equal to E
+00001102  6700 00A2                 98              BEQ     printE
+00001106  B63C 000F                 99              CMP.B   #$F,D3          *Checks if D3 is equal to F
+0000110A  6700 00A4                100              BEQ     printF
+0000110E  5904                     101  n2acheck    SUB.B   #4,D4           *Decrements our counter
+00001110  B83C 0000                102              CMP.B   #0,D4           *Checks if counter reached 0
+00001114  6C00 FF70                103              BGE     n2ascii2        *Returns to top of loop to continue        
+00001118  4E75                     104              RTS                     *Else return to caller
+0000111A                           105  
+0000111A  4281                     106  print0      CLR.L   D1              *Clears D1
+0000111C  123C 0030                107              MOVE.B  #$30,D1         *Sets D1 as ascii 0
+00001120  6000 0098                108              BRA     printchar       *prints the character
+00001124  4281                     109  print1      CLR.L   D1              *Clears D1
+00001126  123C 0031                110              MOVE.B  #$31,D1         *Sets D1 as ascii 1
+0000112A  6000 008E                111              BRA     printchar       *prints the character
+0000112E  4281                     112  print2      CLR.L   D1              *Clears D1
+00001130  123C 0032                113              MOVE.B  #$32,D1         *Sets D1 as ascii 2
+00001134  6000 0084                114              BRA     printchar       *prints the character
+00001138  4281                     115  print3      CLR.L   D1              *Clears D1
+0000113A  123C 0033                116              MOVE.B  #$33,D1         *Sets D1 as ascii 3
+0000113E  6000 007A                117              BRA     printchar       *prints the character
+00001142  4281                     118  print4      CLR.L   D1              *Clears D1
+00001144  123C 0034                119              MOVE.B  #$34,D1         *Sets D1 as ascii 4
+00001148  6000 0070                120              BRA     printchar       *prints the character
+0000114C  4281                     121  print5      CLR.L   D1              *Clears D1
+0000114E  123C 0035                122              MOVE.B  #$35,D1         *Sets D1 as ascii 5
+00001152  6000 0066                123              BRA     printchar       *prints the character
+00001156  4281                     124  print6      CLR.L   D1              *Clears D1
+00001158  123C 0036                125              MOVE.B  #$36,D1         *Sets D1 as ascii 6
+0000115C  6000 005C                126              BRA     printchar       *prints the character
+00001160  4281                     127  print7      CLR.L   D1              *Clears D1
+00001162  123C 0037                128              MOVE.B  #$37,D1         *Sets D1 as ascii 7
+00001166  6000 0052                129              BRA     printchar       *prints the character
+0000116A  4281                     130  print8      CLR.L   D1              *Clears D1
+0000116C  123C 0038                131              MOVE.B  #$38,D1         *Sets D1 as ascii 8
+00001170  6000 0048                132              BRA     printchar       *prints the character
+00001174  4281                     133  print9      CLR.L   D1              *Clears D1
+00001176  123C 0039                134              MOVE.B  #$39,D1         *Sets D1 as ascii 9
+0000117A  6000 003E                135              BRA     printchar       *prints the character
+0000117E  4281                     136  printA      CLR.L   D1              *Clears D1
+00001180  123C 0041                137              MOVE.B  #$41,D1         *Sets D1 as ascii A
+00001184  6000 0034                138              BRA     printchar       *prints the character
+00001188  4281                     139  printB      CLR.L   D1              *Clears D1
+0000118A  123C 0042                140              MOVE.B  #$42,D1         *Sets D1 as ascii B
+0000118E  6000 002A                141              BRA     printchar       *prints the character
+00001192  4281                     142  printC      CLR.L   D1              *Clears D1
+00001194  123C 0043                143              MOVE.B  #$43,D1         *Sets D1 as ascii C
+00001198  6000 0020                144              BRA     printchar       *prints the character
+0000119C  4281                     145  printD      CLR.L   D1              *Clears D1
+0000119E  123C 0044                146              MOVE.B  #$44,D1         *Sets D1 as ascii D
+000011A2  6000 0016                147              BRA     printchar       *prints the character
+000011A6  4281                     148  printE      CLR.L   D1              *Clears D1
+000011A8  123C 0045                149              MOVE.B  #$45,D1         *Sets D1 as ascii E
+000011AC  6000 000C                150              BRA     printchar       *prints the character         
+000011B0  4281                     151  printF      CLR.L   D1              *Clears D1
+000011B2  123C 0046                152              MOVE.B  #$46,D1         *Sets D1 as ascii F
+000011B6  6000 0002                153              BRA     printchar       *prints the character
+000011BA  103C 0006                154  printchar   MOVE.B  #6,D0           *Sets up Trap
+000011BE  4E4F                     155              TRAP    #15
+000011C0  6000 FF4C                156              BRA     n2acheck        *returns to n2ascii
+000011C4                           157              
+000011C4                           158  
+000011C4                           159  end_search    
+000011C4                           160  
+000011C4  FFFF FFFF                161      SIMHALT             ; halt simulator
+000011C8                           162  
+000011C8                           163  * Put variables and constants here
+000011C8                           164  
+000011C8= 20                       165  space       DC.B    $20         *space
+000011C9  =0000000D                166  CR          EQU     $0D         *Carriage return
+000011C9  =0000000A                167  LF          EQU     $0A         *Line Feed
+000011C9= 0D 0A 00                 168  newline     DC.B    CR,LF,0     *New Line
+000011CC  =00000002                169  byte        EQU     2           *How much to move the search address.
+000011CC                           170                                  *2 bytes because we're searching for a word
+000011CC  =00001000                171  cur_address EQU     $00001000   *Start of search
+000011CC  =00001010                172  test_end    EQU     $00001010   *End of search
+000011CC                           173  mydata      REG     D0-D7/A0-A6  *Used for pushing registers to stack
+000011CC= 44 41 54 41 20 00        174  datastring  DC.B    'DATA ',0   *Data string
+000011D2= 4E 4F 50 00              175  NOPstring   DC.B    'NOP',0     *NOP string
+000011D6  =00004E71                176  nop_code    EQU     $4E71
+000011D6                           177  
+000011D6                           178  
+000011D6                           179      END    START        ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+BYTE                2
+CR                  D
+CUR_ADDRESS         1000
+DATASTRING          11CC
+ENDOP               1030
+END_SEARCH          11C4
+GETOP               101E
+ISDATA              1064
+ISNOP               1032
+LF                  A
+LOOP                100E
+MYDATA              7FFF
+N2ACHECK            110E
+N2ASCII             1082
+N2ASCII2            1086
+NEWLINE             11C9
+NOPSTRING           11D2
+NOP_CODE            4E71
+OUTADDRESS          104C
+OUTPUT              1044
+PRINT0              111A
+PRINT1              1124
+PRINT2              112E
+PRINT3              1138
+PRINT4              1142
+PRINT5              114C
+PRINT6              1156
+PRINT7              1160
+PRINT8              116A
+PRINT9              1174
+PRINTA              117E
+PRINTB              1188
+PRINTC              1192
+PRINTCHAR           11BA
+PRINTD              119C
+PRINTE              11A6
+PRINTF              11B0
+SPACE               11C8
+START               1000
+TEST_END            1010
