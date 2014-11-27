@@ -115,7 +115,12 @@ EA_ORI                              ;Parsing EA for ORI function
       BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      CMP.L       %001,D2           ;Address register direct is not a valid input for NEG
+      BSR         EA_PARSE_IMMEDIATE_DATA  ;parsing immediate data
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      CMP.L       %001,D2           ;Address register direct is not a valid input for ORI
       BRA         ERROR
 
       CMP.L       %111,D2           ;immediate data is not a valid input for ORI
