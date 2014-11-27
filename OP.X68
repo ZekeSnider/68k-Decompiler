@@ -6,9 +6,19 @@
 *-----------------------------------------------------------
     ORG    $1000
 START:                  ; first instruction of program
+*KNOWN ISSUES*
 
+*EOR doesn't increment the word for the immediate, so assumes the next word is a new command
+*Since next word is usually small, the first two bytes are often $00, leading decompiler to
+*think it's another EOR
 * Put program code here
-            NOP
+            NOP                     *Test NOP
+            EOR     D0,D1           *Test EOR
+            ORI.W   #13,D0          *Test ORI
+            OR      D0,D0           *Test OR
+            ADDA.L    A0,A0           *Test ADDA
+            ADD     D0,D0           *Test ADD
+            CLR.W   D0              *Clears D0
             LEA     cur_address,A5   *Load start address
             LEA     test_end,A6     *Load end address
         
@@ -23,21 +33,105 @@ getOP       MOVE.W  D0,D2           *Moves data to D2 to use
             CMP.W   #nop_code,D2     *Compares to NOP
             BEQ     isNOP           *Skips the return if it is NOP
             
+            BSR     firstByte       *Masks to the first byte
+            BRA     compare_ORI     *Compares the ORI op codes
+endORI      BSR     compMask        *Masks D2 to make comparisons easier
+            BRA     compare_EOR     *Compares the EOR op codes
+endEOR      BRA     compare_OR      *Compares the OR op codes
+endOR       BRA     compare_ADD     *Compares the ADD op codes
+endADD
+                                    *if we get here, the operation is unknown
+            MOVE.W  D0,D2           *Restores D2 to default
             BSR     outaddress      *Data unknown, just print the address
             BSR     isData          *And then the data
 endOP       RTS                     *Returns to caller
+
+*Comparison subroutines, broken up by Operation
+compare_ORI
+            CMP.W   #ori_code,D2    *Compares to ORI
+            BEQ     isORI
+            BRA     endORI
+            
+compare_OR
+            CMP.W   #orbDn_code,D2  *Compares to ORI.B -> Dn
+            BEQ     isOR
+            CMP.W   #orwDn_code,D2  *Compares to ORI.W -> Dn
+            BEQ     isOR
+            CMP.W   #orlDn_code,D2  *Compares to ORI.L -> Dn
+            BEQ     isOR
+            CMP.W   #orbEA_code,D2  *Compares to ORI.B -> EA
+            BEQ     isOR
+            CMP.W   #orwEA_code,D2  *Compares to ORI.W -> EA
+            BEQ     isOR
+            CMP.W   #orlEA_code,D2  *Compares to ORI.L -> EA
+            BEQ     isOR
+            BRA     endOR
+            
+compare_EOR
+            CMP.W   #eorb_code,D2   *Compares to EOR.B
+            BEQ     isEOR
+            CMP.W   #eorw_code,D2   *Compares to EOR.W
+            BEQ     isEOR
+            CMP.W   #eorl_code,D2   *Compares to EOR.L
+            BEQ     isEOR
+            BRA     endEOR
+            
+compare_ADD
+            CMP.W   #addbDn_code,D2 *Compares to ADD.B -> Dn
+            BEQ     isADD
+            CMP.W   #addwDn_code,D2 *Compares to ADD.W -> Dn
+            BEQ     isADD
+            CMP.W   #addlDn_code,D2 *Compares to ADD.L -> Dn
+            BEQ     isADD
+            CMP.W   #addbEA_code,D2 *Compares to ADD.B -> EA
+            BEQ     isADD
+            CMP.W   #addwEA_code,D2 *Compares to ADD.W -> EA
+            BEQ     isADD
+            CMP.W   #addlEA_code,D2 *Compares to ADD.L -> EA
+            BEQ     isADD
+            CMP.W   #addaw_code,D2  *Compares to ADDA.W
+            BEQ     isADDA
+            CMP.W   #addal_code,D2  *Compares to ADDA.L
+            BEQ     isADDA
+            BRA     endADD
 
 isNOP       BSR     outaddress      *prints current address
             LEA     NOPstring,A1    *Loads NOPstring for printing
             MOVE.B  #13,D0          *Sets up trap
             TRAP    #15
+            BRA     endOP            
+isEOR       BSR     outaddress      *prints current address
+            LEA     EORstring,A1    *Loads EORstring for printing
+            MOVE.B  #13,D0          *Sets up trap
+            TRAP    #15
+            BRA     endOP            
+isORI       BSR     outaddress      *prints current address
+            LEA     ORIstring,A1    *Loads ORIstring for printing
+            MOVE.B  #13,D0          *Sets up trap
+            TRAP    #15
+            BRA     endOP
+isOR        BSR     outaddress      *prints current address
+            LEA     ORstring,A1     *Loads ORstring for printing
+            MOVE.B  #13,D0          *Sets up trap
+            TRAP    #15
+            BRA     endOP
+isADD       BSR     outaddress      *prints current address
+            LEA     ADDstring,A1     *Loads ADDstring for printing
+            MOVE.B  #13,D0          *Sets up trap
+            TRAP    #15
+            BRA     endOP
+isADDA      BSR     outaddress      *prints current address
+            LEA     ADDAstring,A1   *Loads ADDstring for printing
+            MOVE.B  #13,D0          *Sets up trap
+            TRAP    #15
             BRA     endOP
             
-            
-
-output      MOVE.W  D0,D2           *Moves data to D2
-            CLR.W   D0              *Clears D0
-            BSR     outaddress      *prints
+*Masks to make comparisons easier
+compMask    MOVE.W  D0,D2           *Gets fresh copy of D0
+            ANDI.W  #opMask,D2      *Masks D2 for rest of comparisons
+            RTS
+firstByte   ANDI.W  #BitMask15to8,D2   *Masks D2 for the first byte
+            RTS
             
 *prints address
 outaddress  MOVE.W  D2,-(sp)        *Saves D2
@@ -170,14 +264,42 @@ newline     DC.B    CR,LF,0     *New Line
 byte        EQU     2           *How much to move the search address.
                                 *2 bytes because we're searching for a word
 cur_address EQU     $00001000   *Start of search
-test_end    EQU     $00001010   *End of search
+test_end    EQU     $00001030   *End of search
 mydata      REG     D0-D7/A0-A6  *Used for pushing registers to stack
 datastring  DC.B    'DATA ',0   *Data string
 NOPstring   DC.B    'NOP',0     *NOP string
-nop_code    EQU     $4E71
+EORstring   DC.B    'EOR',0     *EOR string
+ORIstring   DC.B    'ORI',0     *ORI string
+ORstring    DC.B    'OR',0      *OR string
+ADDstring   DC.B    'ADD',0     *ADD string
+ADDAstring  DC.B    'ADDA',0     *ADDA string
 
+nop_code    EQU     $4E71       *Hex for NOP
+BitMask15to8 EQU     $FF00       *Mask for showing first two bytes, 0'ing last 2
+opMask      EQU     $F1C0       *Masks word so first byte and OP mode are visible
+                                *The rest of the word are 0's
+eorb_code   EQU     %1011000100000000   *Binary of EOR.B, masked
+eorw_code   EQU     %1011000101000000   *Binary of EOR.W, masked
+eorl_code   EQU     %1011000110000000   *Binary of EOR.L, masked
+ori_code    EQU     $0000               *Hex of first two bytes of ORI
+                                        *last 2 bytes don't matter for compare
+orbDn_code  EQU     %1000000000000000   *Binary of OR.B -> Dn
+orwDn_code  EQU     %1000000001000000   *Binary of OR.W -> Dn
+orlDn_code  EQU     %1000000010000000   *Binary of OR.L -> Dn
+orbEA_code  EQU     %1000000100000000   *Binary of OR.B -> EA
+orwEA_code  EQU     %1000000101000000   *Binary of OR.W -> EA
+orlEA_code  EQU     %1000000110000000   *Binary of OR.L -> EA
+addbDn_code EQU     %1101000000000000   *Binary of ADD.B -> Dn
+addwDn_code EQU     %1101000001000000   *Binary of ADD.W -> Dn
+addlDn_code EQU     %1101000010000000   *Binary of ADD.L -> Dn
+addbEA_code EQU     %1101000100000000   *Binary of ADD.B -> EA
+addwEA_code EQU     %1101000101000000   *Binary of ADD.W -> EA
+addlEA_code EQU     %1101000110000000   *Binary of ADD.L -> EA
+addaw_code  EQU     %1101000011000000   *Binary of ADDA.W
+addal_code  EQU     %1101000111000000   *Binary of ADDA.L
 
     END    START        ; last line of source
+
 
 
 *~Font name~Courier New~
