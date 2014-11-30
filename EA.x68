@@ -302,6 +302,99 @@ EA_SUBQ                             ;Parsing EA for SUBQ function
 
       RTS                           ;Returning to source
 
+
+*Input: D0 (input Line)
+EA_MOVE                             ;Parsing EA for MOVE function
+
+      BSR         BitMask3to5       ;isolating source address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating source address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      BSR         BitMask6to8       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask9to11       ;isloating destination address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.W       %001,D2           ;Address register direct is not a valid destination mode
+      BRA         ERROR
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the destination     
+
+      RTS                           ;Returning to source
+
+*Input: D0 (input Line)
+EA_MOVEA                            ;Parsing EA for MOVEA function
+
+      BSR         BitMask3to5       ;isolating source address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating source address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      BSR         BitMask9to11      ;isloating destination address register
+
+      MOVE.L      D7,D3             ;Moving return value to D3
+      BSR         EA_PARSE_An       ;parsing address register direct for the destination     
+
+      RTS                           ;Returning to source
+
+*Input: D0 (input Line)
+EA_CMP                             ;Parsing EA for CMP function
+
+      BSR         BitMask3to5       ;isolating source address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating source address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      BSR         BitMask9to11      ;isloating destination address register
+
+      MOVE.L      D7,D3             ;Moving return value to D3
+      BSR         EA_PARSE_Dn       ;parsing data register direct for the destination     
+
+      RTS                           ;Returning to source
+
+
+EA_CMPI                             ;Parsing EA for CMPI function
+
+      BSR         BitMask3to5       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating destination address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_IMMEDIATE_DATA          
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
+      BRA         ERROR
+
+      BSR         EA_PARSE_MODE     ;outputting Address register destination
+
+      RTS                           ;Returning to source
+
+
+
 *Finds correct function to parse the EA Mode 
 *Input: D2 (EA Mode)
 *Input: D3 (EA Register Number)
@@ -323,7 +416,7 @@ EA_PARSE_MODE
 
       RTS
 
-
+x
 *These functions are called when the EA Mode matches.
 *They store the human ouput code to the A0 register, then increment it.
 *Then return to where they were called from.
@@ -371,10 +464,13 @@ EA_PARSE_INDIRECT_DECREMENT_An
       RTS
 
 EA_PARSE_IMMEDIATE_DATA
+      
 
 EA_PARSE_ABSOLUTE_LONG_ADDRESS
       
+      
 EA_PARSE_ABSOLUTE_WORD_ADDRESS
+
 
 EA_PARSE_DISPLAY_IMMEDIATE_DATA
 
