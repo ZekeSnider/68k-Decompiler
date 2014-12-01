@@ -394,6 +394,76 @@ EA_CMPI                             ;Parsing EA for CMPI function
       RTS                           ;Returning to source
 
 
+*Input: D0 (input Line)
+EA_MULS                             ;Parsing EA for MULS function
+
+      BSR         BitMask3to5       ;isolating source address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating source address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode for DIVS
+      BRA         ERROR
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      BSR         BitMask9to11      ;isloating destination address register
+
+      MOVE.L      D7,D3             ;Moving return value to D3
+      BSR         EA_PARSE_Dn       ;parsing data register direct for the destination     
+
+      RTS                           ;Returning to source
+
+*Input: D0 (input Line)
+EA_DIVS                             ;Parsing EA for DIVS function
+
+      BSR         BitMask3to5       ;isolating source address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating source address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode for DIVS
+      BRA         ERROR
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      BSR         BitMask9to11      ;isloating destination address register
+
+      MOVE.L      D7,D3             ;Moving return value to D3
+      BSR         EA_PARSE_Dn       ;parsing data register direct for the destination     
+
+      RTS                           ;Returning to source
+
+*Input: D0 (input Line)
+EA_LS                             ;Parsing EA for LSR/LSL function
+
+      BSR         BitMask0to2       ;isloating source EA register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode for DIVS
+      BRA         ERROR
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+
+      BSR         BitMask9to11      ;isloating destination address register
+
+      MOVE.L      D7,D3             ;Moving return value to D3
+      BSR         EA_PARSE_Dn       ;parsing data register direct for the destination     
+
+      RTS                           ;Returning to source
+
+
 
 *Finds correct function to parse the EA Mode 
 *Input: D2 (EA Mode)
@@ -414,8 +484,22 @@ EA_PARSE_MODE
       CMP.W       D2,%100
       BSR         EA_PARSE_INDIRECT_DECREMENT_An
 
+      CMP.W       D2,%111
+      BSR         EA_ADDITIONAL_DATA
+
       RTS
 
+EA_ADDITIONAL_DATA
+      CMP.W       D3,%000
+      BSR         EA_PARSE_ABSOLUTE_WORD_ADDRESS
+
+      CMP.W       D3,%001
+      BSR         EA_PARSE_ABSOLUTE_LONG_ADDRESS
+
+      CMP.W       D3,%100
+      BSR         EA_PARSE_IMMEDIATE_DATA
+
+      RTS
 x
 *These functions are called when the EA Mode matches.
 *They store the human ouput code to the A0 register, then increment it.
@@ -464,15 +548,75 @@ EA_PARSE_INDIRECT_DECREMENT_An
       RTS
 
 EA_PARSE_IMMEDIATE_DATA
-      
+      MOVE.W     #'#',(A0)+
+      BSR        IO_GET_WORD
+      RTS
 
 EA_PARSE_ABSOLUTE_LONG_ADDRESS
-      
+      MOVE.W     #'$',(A0)+
+      BSR        IO_GET_WORD
+      MOVE.W     #'.',(A0)+
+      MOVE.W     #'L',(A0)+
+      RTS
       
 EA_PARSE_ABSOLUTE_WORD_ADDRESS
+      MOVE.W     #'$',(A0)+
+      BSR        IO_GET_WORD
+      MOVE.W     #'.',(A0)+
+      MOVE.W     #'W',(A0)+
+      RTS
 
 
-EA_PARSE_DISPLAY_IMMEDIATE_DATA
+IO_GET_WORD
+      MOVE.W  (A5),D0         *Gets the data of where the pointer is at
+      BSR     getOP           *Gets the data at add
+      ADDQ.W  #byte,A5        *Incrementing the pointer one word
+      MOVE.W  D0,D2           *Moves data to D2 to use
+      BSR     n2asciiSTACK    *Branching to n2asciiSTACK to push the word to the stack
+      RTS
+
+
+*Modified version of the n2ascii function that pushes to the A0 stack instead of outputting to console
+n2asciiSTACK      MOVE.B  #12,D4          *Sets up D4 as counter.
+n2asciiSTACK2     MOVE.W  D2,D3           *Moves to D3 to work on there 
+                  LSR.W   D4,D3           
+                  ANDI.W  #$000F,D3       *Masks to check last nibble
+                  CMP.B   #$0,D3          *Chekcs if D3 is equal to 0
+                  MOVE.W  #'0',(A0)+
+                  CMP.B   #$1,D3          *Chekcs if D3 is equal to 1
+                  MOVE.W  #'1',(A0)+
+                  CMP.B   #$2,D3          *Chekcs if D3 is equal to 2
+                  MOVE.W  #'2',(A0)+
+                  CMP.B   #$3,D3          *Chekcs if D3 is equal to 3
+                  MOVE.W  #'3',(A0)+
+                  CMP.B   #$4,D3          *Chekcs if D3 is equal to 4
+                  MOVE.W  #'4',(A0)+
+                  CMP.B   #$5,D3          *Chekcs if D3 is equal to 5
+                  MOVE.W  #'5',(A0)+
+                  CMP.B   #$6,D3          *Chekcs if D3 is equal to 6
+                  MOVE.W  #'6',(A0)+
+                  CMP.B   #$7,D3          *Chekcs if D3 is equal to 7
+                  MOVE.W  #'7',(A0)+
+                  CMP.B   #$8,D3          *Chekcs if D3 is equal to 8
+                  MOVE.W  #'8',(A0)+
+                  CMP.B   #$9,D3          *Chekcs if D3 is equal to 9
+                  MOVE.W  #'9',(A0)+
+                  CMP.B   #$A,D3          *Chekcs if D3 is equal to A
+                  MOVE.W  #'A',(A0)+
+                  CMP.B   #$B,D3          *Chekcs if D3 is equal to B
+                  MOVE.W  #'B',(A0)+
+                  CMP.B   #$C,D3          *Chekcs if D3 is equal to C
+                  MOVE.W  #'C',(A0)+
+                  CMP.B   #$D,D3          *Chekcs if D3 is equal to D
+                  MOVE.W  #'D',(A0)+
+                  CMP.B   #$E,D3          *Chekcs if D3 is equal to E
+                  MOVE.W  #'E',(A0)+
+                  CMP.B   #$F,D3          *Checks if D3 is equal to F
+                  MOVE.W  #'F',(A0)+
+ n2acheckSTACK    SUB.B   #4,D4           *Decrements our counter
+                  CMP.B   #0,D4           *Checks if counter reached 0
+                  BGE     n2ascii2        *Returns to top of loop to continue        
+                  RTS                     *Else return to caller
 
 
 *Converts a register number to decimal and stores to D7 
