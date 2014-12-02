@@ -18,7 +18,8 @@ BitMask12to15
       MOVE.L   %1111000000000000,D6       ;Storing the mask to D6
       MOVE.L   D0,D7                      ;Copying the input line to D7
       AND.L    D6,D7                      ;ANDING the Data
-      LSR      #12,D7                     ;Shifting the irrelavant bits out the right side
+      LSR      #8,D7                      ;Shifting the irrelavant bits out the right side
+      LSR      #4,D7
       RTS
 
 *9-11 commonly used for register
@@ -26,7 +27,8 @@ BitMask9to11
       MOVE.L   %0000111000000000,D6       ;Storing the mask to D6
       MOVE.L   D0,D7                      ;Copying the input line to D7
       AND.L    D6,D7                      ;ANDING the Data
-      LSR      #9,D7                      ;Shifting the irrelavant bits out the right side
+      LSR      #8,D7                      ;Shifting the irrelavant bits out the right side
+      LSR      #1,D7 
       RTS
 
 
@@ -39,7 +41,7 @@ BitMask6to8
       RTS
 
 *6-7 commonly used for size codes
-BitMask6to8 
+BitMask6to7 
       MOVE.L   %0000000011000000,D6       ;Storing the mask to D6
       MOVE.L   D0,D7                      ;Copying the input line to D7
       AND.L    D6,D7                      ;ANDING the Data
@@ -68,7 +70,8 @@ BitMask14to15
       MOVE.L   %1100000000000000,D6       ;Storing the mask to D6
       MOVE.L   D0,D7                      ;Copying the input line to D7
       AND.L    D6,D7                      ;ANDING the Data
-      LSR      #14,D7                      ;Shifting the irrelavant bits out the right side
+      LSR      #8,D7                     ;Shifting the irrelavant bits out the right side
+      LSR      #6,D7
       RTS
 
 *12-13 used for MOVE size code
@@ -76,7 +79,8 @@ BitMask12to13
       MOVE.L   %0011000000000000,D6       ;Storing the mask to D6
       MOVE.L   D0,D7                      ;Copying the input line to D7
       AND.L    D6,D7                      ;ANDING the Data
-      LSR      #12,D7                      ;Shifting the irrelavant bits out the right side
+      LSR      #8,D7                      ;Shifting the irrelavant bits out the right side
+      LSR      #4,D7
       RTS
 
 *8-15 used for ORI OP Code
@@ -100,5 +104,14 @@ BitMaskSubQ
       MOVE.L   %1111000100000000,D6       ;Storing the mask to D6
       MOVE.L   D0,D7                      ;Copying the input line to D7
       AND.L    D6,D7                      ;ANDING the Data
+      RTS
+
+
+*5 used for LSR/LSL i/r
+BitMask5to5 
+      MOVE.L   %0000000000100000,D6       ;Storing the mask to D6
+      MOVE.L   D0,D7                      ;Copying the input line to D7
+      AND.L    D6,D7                      ;ANDING the Data
+      LSR      #3,D7                      ;Shifting the irrelavant bits out the right side
       RTS
 

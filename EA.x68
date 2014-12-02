@@ -20,11 +20,11 @@ EA_NEG                              ;Parsing EA for NEG function
       MOVE.L      D7,D3             ;Moving return value to D3
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for NEG
-      BRA         ERROR
+      BEQ         ERROR
 
       CMP.L       %111,D2           ;immediate data is not a valid input for NEG
       CMP.L       %100,D3
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
 
@@ -53,11 +53,11 @@ EA_OR                              ;Parsing EA for OR function
       BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      CMP.B       D1,#1             ;if the OPMode is type 1, the EA is the source
-      BSR         EA_OR_SOURCE      
+      CMP.B       #1,D1             ;if the OPMode is type 1, the EA is the source
+      BEQ         EA_OR_SOURCE      
 
-      CMP.B       D1,#2             ;if the OPMode is type 2, the EA is the destination
-      BSR         EA_OR_SOURCE
+      CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
+      BEQ         EA_OR_SOURCE
 
       MOVE.B      #0,(A0)+          ;Terminating character
 
@@ -66,7 +66,7 @@ EA_OR                              ;Parsing EA for OR function
 *Called if the EA address field is a source operand
 EA_OR_SOURCE
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA Source
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
@@ -81,10 +81,10 @@ EA_OR_SOURCE
 *Called if the EA address field is a destinaton operand
 EA_OR_DESTINATION
       CMP.L       %000,D2           ;Data register direct is not a valid input for EA Source
-      BRA         ERROR
+      BEQ         ERROR
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA Source
-      BRA         ERROR
+      BEQ         ERROR
 
       MOVE.L      D3,D6             ;backing up EA register to D6
       MOVE.L      D5,D3             ;Moving register number to D3
@@ -104,7 +104,7 @@ EA_OR_DESTINATION
 *Input: D1 (immediate data source)
 EA_ORI                              ;Parsing EA for ORI function
 
-      BSR         EA_PARSE_DISPLAY_IMMEDIATE_DATA  ;displays immediate data
+      BSR         EA_PARSE_IMMEDIATE_DATA  ;displays immediate data
 
       MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.W      #' ',(A0)+
@@ -121,11 +121,11 @@ EA_ORI                              ;Parsing EA for ORI function
       MOVE.W      #' ',(A0)+
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for ORI
-      BRA         ERROR
+      BEQ         ERROR
 
       CMP.L       %111,D2           ;immediate data is not a valid input for ORI
       CMP.L       %100,D3
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
 
@@ -147,11 +147,11 @@ EA_AND                              ;Parsing EA for AND function
       BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      CMP.B       D1,#1             ;if the OPMode is type 1, the EA is the source
-      BSR         EA_AND_SOURCE      
+      CMP.B       #1,D1             ;if the OPMode is type 1, the EA is the source
+      BEQ         EA_AND_SOURCE      
 
-      CMP.B       D1,#2             ;if the OPMode is type 2, the EA is the destination
-      BSR         EA_AND_SOURCE
+      CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
+      BEQ         EA_AND_SOURCE
 
       MOVE.B      #0,(A0)+          ;Terminating character
 
@@ -161,7 +161,7 @@ EA_AND                              ;Parsing EA for AND function
 EA_AND_SOURCE
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA source
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
@@ -176,10 +176,10 @@ EA_AND_SOURCE
 *Called if the EA address field is a destinaton operand
 EA_AND_DESTINATION
       CMP.L       %000,D2           ;Data register direct is not a valid input for EA destinaton
-      BRA         ERROR
+      BEQ         ERROR
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
-      BRA         ERROR
+      BEQ         ERROR
 
       MOVE.L      D3,D6             ;backing up EA register to D6
       MOVE.L      D5,D7             ;Moving register number to D3
@@ -208,7 +208,7 @@ EA_ANDI                             ;Parsing EA for ANDI function
       MOVE.W      #' ',(A0)+
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
-      BRA         ERROR
+      BEQ         ERROR
 
       MOVE.L      D5,D7
       BSR         EA_PARSE_MODE       ;outputting Address register destination
@@ -230,11 +230,11 @@ EA_SUB                              ;Parsing EA for AND function
       BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      CMP.B       D1,#1             ;if the OPMode is type 1, the EA is the source
-      BSR         EA_AND_SOURCE      
+      CMP.B       #1,D1             ;if the OPMode is type 1, the EA is the source
+      BEQ         EA_AND_SOURCE      
 
-      CMP.B       D1,#2             ;if the OPMode is type 2, the EA is the destination
-      BSR         EA_AND_SOURCE
+      CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
+      BEQ         EA_AND_SOURCE
 
       MOVE.B      #0,(A0)+          ;Terminating character
 
@@ -245,7 +245,7 @@ EA_SUB_SOURCE
 
       CMP.L       %000,D2           ;Address register direct is not a valid input for EA source
       CMP.L       #1,D4             ;if it is a byte-sized operation
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
@@ -260,10 +260,10 @@ EA_SUB_SOURCE
 *Called if the EA address field is a destinaton operand
 EA_SUB_DESTINATION
       CMP.L       %000,D2           ;Data register direct is not a valid input for EA destinaton
-      BRA         ERROR
+      BEQ         ERROR
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
-      BRA         ERROR
+      BEQ         ERROR
 
       MOVE.L      D3,D6             ;backing up EA register to D6
       MOVE.L      D5,D7             ;Moving register number to D3
@@ -324,7 +324,7 @@ EA_MOVE                             ;Parsing EA for MOVE function
       MOVE.L      D7,D3             ;Moving return value to D3
 
       CMP.W       %001,D2           ;Address register direct is not a valid destination mode
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the destination     
 
@@ -387,7 +387,7 @@ EA_CMPI                             ;Parsing EA for CMPI function
       MOVE.W      #' ',(A0)+
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;outputting Address register destination
 
@@ -404,7 +404,7 @@ EA_MULS                             ;Parsing EA for MULS function
       MOVE.L      D7,D3             ;Moving return value to D3
 
       CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode for DIVS
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
@@ -428,7 +428,7 @@ EA_DIVS                             ;Parsing EA for DIVS function
       MOVE.L      D7,D3             ;Moving return value to D3
 
       CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode for DIVS
-      BRA         ERROR
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
@@ -443,64 +443,202 @@ EA_DIVS                             ;Parsing EA for DIVS function
       RTS                           ;Returning to source
 
 *Input: D0 (input Line)
-EA_LS                             ;Parsing EA for LSR/LSL function
+EA_LS_REGISTER                      ;Parsing EA for LSR/LSL function for register shifts
 
-      BSR         BitMask0to2       ;isloating source EA register
+      BSR         BitMask5to5
+      MOVE.L      D7,D5             ;storing i/r value in D5
+
+      BSR         BitMask9to11      ;isloating source EA source register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode for DIVS
-      BRA         ERROR
+      BSR         EA_PARSE_REGISTER ;parsing the count/register field
+      MOVE.L      D7,D5             ;moving result to D5
 
-      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+      CMP.W       %1,D5             ;if the i/r value is 1 display the data register
+      MOVE.W      #'D',(A0)+
+
+      CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
+      MOVE.W      #'#',(A0)+
+
+      MOVE.W      D5,(A0)+          ;pushing the register number or immediate data to the stack
 
       MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.W      #' ',(A0)+
-
-      BSR         BitMask9to11      ;isloating destination address register
-
+ 
+      BSR         BitMask0to2       ;isloating source destination register
       MOVE.L      D7,D3             ;Moving return value to D3
-      BSR         EA_PARSE_Dn       ;parsing data register direct for the destination     
+
+      BSR         EA_PARSE_Dn       ;displaying the destination data register
 
       RTS                           ;Returning to source
 
+*Input: D0 (input Line)
+EA_LS_MEMORY                        ;Parsing EA for LSR/LSL function for memory shifts
+
+      BSR         BitMask3to5       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating source address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.W       %000,D2           ;Data Register direct is not a valid EA mode
+      BEQ         ERROR
+
+      CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode
+      BEQ         ERROR
+
+      CMP.W       %111,D2           ;Immediate Data
+      CMP.W       %010,D3
+      BEQ         ERROR
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      RTS                           ;Returning to source
+
+*Input: D0 (input Line)
+EA_AS_REGISTER                      ;Parsing EA for ASR/ASL function for register shifts
+
+      BSR         BitMask5to5
+      MOVE.L      D7,D5             ;storing i/r value in D5
+
+      BSR         BitMask9to11      ;isloating source EA source register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_REGISTER ;parsing the count/register field
+      MOVE.L      D7,D5             ;moving result to D5
+
+      CMP.W       %1,D5             ;if the i/r value is 1 display the data register
+      MOVE.W      #'D',(A0)+
+
+      CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
+      MOVE.W      #'#',(A0)+
+
+      MOVE.W      D5,(A0)+          ;pushing the register number or immediate data to the stack
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+ 
+      BSR         BitMask0to2       ;isloating source destination register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_Dn       ;displaying the destination data register
+
+      RTS                           ;Returning to source
+
+*Input: D0 (input Line)
+EA_AS_MEMORY                        ;Parsing EA for ASR/ASL function for memory shifts
+
+      BSR         BitMask3to5       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating source address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.W       %000,D2           ;Data Register direct is not a valid EA mode
+      BEQ         ERROR
+
+      CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode
+      BEQ         ERROR
+
+      CMP.W       %111,D2           ;Immediate Data
+      CMP.W       %010,D3
+      BEQ         ERROR
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      RTS                           ;Returning to source
+
+
+*Input: D0 (input Line)
+EA_RO_REGISTER                      ;Parsing EA for ROR/ROL function for register shifts
+
+      BSR         BitMask5to5
+      MOVE.L      D7,D5             ;storing i/r value in D5
+
+      BSR         BitMask9to11      ;isloating source EA source register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_REGISTER ;parsing the count/register field
+      MOVE.L      D7,D5             ;moving result to D5
+
+      CMP.W       %1,D5             ;if the i/r value is 1 display the data register
+      MOVE.W      #'D',(A0)+
+
+      CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
+      MOVE.W      #'#',(A0)+
+
+      MOVE.W      D5,(A0)+          ;pushing the register number or immediate data to the stack
+
+      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.W      #' ',(A0)+
+ 
+      BSR         BitMask0to2       ;isloating source destination register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_Dn       ;displaying the destination data register
+
+      RTS                           ;Returning to source
+
+*Input: D0 (input Line)
+EA_RO_MEMORY                        ;Parsing EA for ROR/ROL function for memory shifts
+
+      BSR         BitMask3to5       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating source address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.W       %000,D2           ;Data Register direct is not a valid EA mode
+      BEQ         ERROR
+
+      CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode
+      BEQ         ERROR
+
+      CMP.W       %111,D2           ;Immediate Data
+      CMP.W       %010,D3
+      BEQ         ERROR
+
+      BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+
+      RTS                           ;Returning to source
 
 
 *Finds correct function to parse the EA Mode 
 *Input: D2 (EA Mode)
 *Input: D3 (EA Register Number)
 EA_PARSE_MODE                       
-      CMP.W       D2,%000
-      BSR         EA_PARSE_An
+      CMP.W       %000,D2
+      BEQ         EA_PARSE_An
 
-      CMP.W       D2,%001
-      BSR         EA_PARSE_Dn
+      CMP.W       %001,D2
+      BEQ         EA_PARSE_Dn
 
-      CMP.W       D2,%010
-      BSR         EA_PARSE_INDIRECT_An
+      CMP.W       %010,D2
+      BEQ         EA_PARSE_INDIRECT_An
 
-      CMP.W       D2,%011
-      BSR         EA_PARSE_INDIRECT_INCREMENT_An
+      CMP.W       %011,D2
+      BEQ         EA_PARSE_INDIRECT_INCREMENT_An
 
-      CMP.W       D2,%100
-      BSR         EA_PARSE_INDIRECT_DECREMENT_An
+      CMP.W       %100,D2
+      BEQ         EA_PARSE_INDIRECT_DECREMENT_An
 
-      CMP.W       D2,%111
-      BSR         EA_ADDITIONAL_DATA
+      CMP.W       %111,D2
+      BEQ         EA_ADDITIONAL_DATA
 
       RTS
 
 EA_ADDITIONAL_DATA
-      CMP.W       D3,%000
-      BSR         EA_PARSE_ABSOLUTE_WORD_ADDRESS
+      CMP.W       %000,D3
+      BEQ         EA_PARSE_ABSOLUTE_WORD_ADDRESS
 
-      CMP.W       D3,%001
-      BSR         EA_PARSE_ABSOLUTE_LONG_ADDRESS
+      CMP.W       %001,D3
+      BEQ         EA_PARSE_ABSOLUTE_LONG_ADDRESS
 
-      CMP.W       D3,%100
-      BSR         EA_PARSE_IMMEDIATE_DATA
+      CMP.W       %100,D3
+      BEQ         EA_PARSE_IMMEDIATE_DATA
 
       RTS
-x
+
 *These functions are called when the EA Mode matches.
 *They store the human ouput code to the A0 register, then increment it.
 *Then return to where they were called from.
@@ -569,7 +707,6 @@ EA_PARSE_ABSOLUTE_WORD_ADDRESS
 
 IO_GET_WORD
       MOVE.W  (A5),D0         *Gets the data of where the pointer is at
-      BSR     getOP           *Gets the data at add
       ADDQ.W  #byte,A5        *Incrementing the pointer one word
       MOVE.W  D0,D2           *Moves data to D2 to use
       BSR     n2asciiSTACK    *Branching to n2asciiSTACK to push the word to the stack
@@ -582,70 +719,102 @@ n2asciiSTACK2     MOVE.W  D2,D3           *Moves to D3 to work on there
                   LSR.W   D4,D3           
                   ANDI.W  #$000F,D3       *Masks to check last nibble
                   CMP.B   #$0,D3          *Chekcs if D3 is equal to 0
-                  MOVE.W  #'0',(A0)+
+                  BEQ     push0
                   CMP.B   #$1,D3          *Chekcs if D3 is equal to 1
-                  MOVE.W  #'1',(A0)+
+                  BEQ     push1
                   CMP.B   #$2,D3          *Chekcs if D3 is equal to 2
-                  MOVE.W  #'2',(A0)+
+                  BEQ     push2
                   CMP.B   #$3,D3          *Chekcs if D3 is equal to 3
-                  MOVE.W  #'3',(A0)+
+                  BEQ     push3
                   CMP.B   #$4,D3          *Chekcs if D3 is equal to 4
-                  MOVE.W  #'4',(A0)+
+                  BEQ     push4
                   CMP.B   #$5,D3          *Chekcs if D3 is equal to 5
-                  MOVE.W  #'5',(A0)+
+                  BEQ     push5
                   CMP.B   #$6,D3          *Chekcs if D3 is equal to 6
-                  MOVE.W  #'6',(A0)+
+                  BEQ     push6
                   CMP.B   #$7,D3          *Chekcs if D3 is equal to 7
-                  MOVE.W  #'7',(A0)+
+                  BEQ     push7
                   CMP.B   #$8,D3          *Chekcs if D3 is equal to 8
-                  MOVE.W  #'8',(A0)+
+                  BEQ     push8
                   CMP.B   #$9,D3          *Chekcs if D3 is equal to 9
-                  MOVE.W  #'9',(A0)+
+                  BEQ     push9
                   CMP.B   #$A,D3          *Chekcs if D3 is equal to A
-                  MOVE.W  #'A',(A0)+
+                  BEQ     pushA
                   CMP.B   #$B,D3          *Chekcs if D3 is equal to B
-                  MOVE.W  #'B',(A0)+
+                  BEQ     pushB
                   CMP.B   #$C,D3          *Chekcs if D3 is equal to C
-                  MOVE.W  #'C',(A0)+
+                  BEQ     pushC
                   CMP.B   #$D,D3          *Chekcs if D3 is equal to D
-                  MOVE.W  #'D',(A0)+
+                  BEQ     pushD
                   CMP.B   #$E,D3          *Chekcs if D3 is equal to E
-                  MOVE.W  #'E',(A0)+
+                  BEQ     pushE
                   CMP.B   #$F,D3          *Checks if D3 is equal to F
-                  MOVE.W  #'F',(A0)+
- n2acheckSTACK    SUB.B   #4,D4           *Decrements our counter
+                  BEQ     pushF
+n2acheckSTACK     SUB.B   #4,D4           *Decrements our counter
                   CMP.B   #0,D4           *Checks if counter reached 0
-                  BGE     n2ascii2        *Returns to top of loop to continue        
+                  BGE     n2asciiSTACK2   *Returns to top of loop to continue        
                   RTS                     *Else return to caller
 
+push0       MOVE.W  #'0',(A0)+
+            RTS
+push1       MOVE.W  #'1',(A0)+
+            RTS
+push2       MOVE.W  #'2',(A0)+
+            RTS
+push3       MOVE.W  #'3',(A0)+
+            RTS
+push4       MOVE.W  #'4',(A0)+
+            RTS
+push5       MOVE.W  #'5',(A0)+
+            RTS
+push6       MOVE.W  #'6',(A0)+
+            RTS
+push7       MOVE.W  #'7',(A0)+
+            RTS
+push8       MOVE.W  #'8',(A0)+
+            RTS
+push9       MOVE.W  #'9',(A0)+
+            RTS
+pushA       MOVE.W  #'A',(A0)+
+            RTS
+pushB       MOVE.W  #'B',(A0)+
+            RTS
+pushC       MOVE.W  #'C',(A0)+
+            RTS
+pushD       MOVE.W  #'D',(A0)+
+            RTS
+pushE       MOVE.W  #'E',(A0)+
+            RTS         
+pushF       MOVE.W  #'F',(A0)+
+            RTS
 
 *Converts a register number to decimal and stores to D7 
 *Input:  D3 (Register Number)
 *Output: D7 
 EA_PARSE_REGISTER                   
 
-      CMP.W       D3,%000
+      CMP.W       %000,D3
       MOVE.W      #0,D7
 
-      CMP.W       D3,%001
+      CMP.W       %001,D3
       MOVE.W      #1,D7
 
-      CMP.W       D3,%010
+      CMP.W       %010,D3
       MOVE.W      #2,D7
 
-      CMP.W       D3,%011
+      CMP.W       %011,D3
       MOVE.W      #3,D7
 
-      CMP.W       D3,%100
+      CMP.W       %100,D3
       MOVE.W      #4,D7
 
-      CMP.W       D3,%101
+      CMP.W       %101,D3
       MOVE.W      #5,D7
 
-      CMP.W       D3,%110
+      CMP.W       %110,D3
       MOVE.W      #6,D7
 
-      CMP.W       D3,%111
+      CMP.W       %111,D3
       MOVE.W      #7,D7
 
       RTS
@@ -655,4 +824,7 @@ EA_PARSE_REGISTER
 ERROR
       *TODO: handle illegal inputs
 
+SIMHALT
+
+byte        EQU     2           *How much to move the search address.
       
