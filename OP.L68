@@ -1,6 +1,6 @@
 00001000 Starting Address
 Assembler used: EASy68K Editor/Assembler v5.15.02
-Created On: 11/26/2014 8:15:13 PM
+Created On: 12/4/2014 10:58:43 AM
 
 00000000                             1  *-----------------------------------------------------------
 00000000                             2  * Title      :
@@ -20,7 +20,7 @@ Created On: 11/26/2014 8:15:13 PM
 00001002  B141                      16              EOR     D0,D1           *Test EOR
 00001004  0040 000D                 17              ORI.W   #13,D0          *Test ORI
 00001008  8040                      18              OR      D0,D0           *Test OR
-0000100A  D1C8                      19              ADDA.L    A0,A0           *Test ADDA
+0000100A  D1C8                      19              ADDA.L  A0,A0           *Test ADDA
 0000100C  D040                      20              ADD     D0,D0           *Test ADD
 0000100E  4240                      21              CLR.W   D0              *Clears D0
 00001010  4BF9 00001000             22              LEA     cur_address,A5   *Load start address
@@ -30,279 +30,647 @@ Created On: 11/26/2014 8:15:13 PM
 0000101E  6100 000C                 26              BSR     getOP           *Gets the data at add
 00001022  544D                      27              ADDQ.W  #byte,A5        *Incrementing the pointer one word
 00001024  BACE                      28              CMPA.W  A6,A5           *Seeing if we're at end of the search area
-00001026  6E00 02CA                 29              BGT     end_search      *go to end if we leave search area
+00001026  6E00 06A2                 29              BGT     end_search      *go to end if we leave search area
 0000102A  60F0                      30              BRA     loop            *else go back to the beginning of the loop
 0000102C                            31              
 0000102C  3400                      32  getOP       MOVE.W  D0,D2           *Moves data to D2 to use
-0000102E  B47C 4E71                 33              CMP.W   #nop_code,D2     *Compares to NOP
-00001032  6700 00C0                 34              BEQ     isNOP           *Skips the return if it is NOP
-00001036                            35              
-00001036  6100 013C                 36              BSR     firstByte       *Masks to the first byte
-0000103A  6000 001E                 37              BRA     compare_ORI     *Compares the ORI op codes
-0000103E  6100 012C                 38  endORI      BSR     compMask        *Masks D2 to make comparisons easier
-00001042  6000 0052                 39              BRA     compare_EOR     *Compares the EOR op codes
-00001046  6000 001C                 40  endEOR      BRA     compare_OR      *Compares the OR op codes
-0000104A  6000 0064                 41  endOR       BRA     compare_ADD     *Compares the ADD op codes
-0000104E                            42  endADD
-0000104E                            43                                      *if we get here, the operation is unknown
-0000104E  3400                      44              MOVE.W  D0,D2           *Restores D2 to default
-00001050  6100 0128                 45              BSR     outaddress      *Data unknown, just print the address
-00001054  6100 013C                 46              BSR     isData          *And then the data
-00001058  4E75                      47  endOP       RTS                     *Returns to caller
-0000105A                            48  
-0000105A                            49  *Comparison subroutines, broken up by Operation
-0000105A                            50  compare_ORI
-0000105A  B47C 0000                 51              CMP.W   #ori_code,D2    *Compares to ORI
-0000105E  6700 00BC                 52              BEQ     isORI
-00001062  60DA                      53              BRA     endORI
-00001064                            54              
-00001064                            55  compare_OR
-00001064  B47C 8000                 56              CMP.W   #orbDn_code,D2  *Compares to ORI.B -> Dn
-00001068  6700 00C6                 57              BEQ     isOR
-0000106C  B47C 8040                 58              CMP.W   #orwDn_code,D2  *Compares to ORI.W -> Dn
-00001070  6700 00BE                 59              BEQ     isOR
-00001074  B47C 8080                 60              CMP.W   #orlDn_code,D2  *Compares to ORI.L -> Dn
-00001078  6700 00B6                 61              BEQ     isOR
-0000107C  B47C 8100                 62              CMP.W   #orbEA_code,D2  *Compares to ORI.B -> EA
-00001080  6700 00AE                 63              BEQ     isOR
-00001084  B47C 8140                 64              CMP.W   #orwEA_code,D2  *Compares to ORI.W -> EA
-00001088  6700 00A6                 65              BEQ     isOR
-0000108C  B47C 8180                 66              CMP.W   #orlEA_code,D2  *Compares to ORI.L -> EA
-00001090  6700 009E                 67              BEQ     isOR
-00001094  60B4                      68              BRA     endOR
-00001096                            69              
-00001096                            70  compare_EOR
-00001096  B47C B100                 71              CMP.W   #eorb_code,D2   *Compares to EOR.B
-0000109A  6700 006C                 72              BEQ     isEOR
-0000109E  B47C B140                 73              CMP.W   #eorw_code,D2   *Compares to EOR.W
-000010A2  6700 0064                 74              BEQ     isEOR
-000010A6  B47C B180                 75              CMP.W   #eorl_code,D2   *Compares to EOR.L
-000010AA  6700 005C                 76              BEQ     isEOR
-000010AE  6096                      77              BRA     endEOR
-000010B0                            78              
-000010B0                            79  compare_ADD
-000010B0  B47C D000                 80              CMP.W   #addbDn_code,D2 *Compares to ADD.B -> Dn
-000010B4  6700 008E                 81              BEQ     isADD
-000010B8  B47C D040                 82              CMP.W   #addwDn_code,D2 *Compares to ADD.W -> Dn
-000010BC  6700 0086                 83              BEQ     isADD
-000010C0  B47C D080                 84              CMP.W   #addlDn_code,D2 *Compares to ADD.L -> Dn
-000010C4  6700 007E                 85              BEQ     isADD
-000010C8  B47C D100                 86              CMP.W   #addbEA_code,D2 *Compares to ADD.B -> EA
-000010CC  6700 0076                 87              BEQ     isADD
-000010D0  B47C D140                 88              CMP.W   #addwEA_code,D2 *Compares to ADD.W -> EA
-000010D4  6700 006E                 89              BEQ     isADD
-000010D8  B47C D180                 90              CMP.W   #addlEA_code,D2 *Compares to ADD.L -> EA
-000010DC  6700 0066                 91              BEQ     isADD
-000010E0  B47C D0C0                 92              CMP.W   #addaw_code,D2  *Compares to ADDA.W
-000010E4  6700 0072                 93              BEQ     isADDA
-000010E8  B47C D1C0                 94              CMP.W   #addal_code,D2  *Compares to ADDA.L
-000010EC  6700 006A                 95              BEQ     isADDA
-000010F0  6000 FF5C                 96              BRA     endADD
-000010F4                            97  
-000010F4  6100 0084                 98  isNOP       BSR     outaddress      *prints current address
-000010F8  43F9 00001300             99              LEA     NOPstring,A1    *Loads NOPstring for printing
-000010FE  103C 000D                100              MOVE.B  #13,D0          *Sets up trap
-00001102  4E4F                     101              TRAP    #15
-00001104  6000 FF52                102              BRA     endOP            
-00001108  6100 0070                103  isEOR       BSR     outaddress      *prints current address
-0000110C  43F9 00001304            104              LEA     EORstring,A1    *Loads EORstring for printing
-00001112  103C 000D                105              MOVE.B  #13,D0          *Sets up trap
-00001116  4E4F                     106              TRAP    #15
-00001118  6000 FF3E                107              BRA     endOP            
-0000111C  6100 005C                108  isORI       BSR     outaddress      *prints current address
-00001120  43F9 00001308            109              LEA     ORIstring,A1    *Loads ORIstring for printing
-00001126  103C 000D                110              MOVE.B  #13,D0          *Sets up trap
-0000112A  4E4F                     111              TRAP    #15
-0000112C  6000 FF2A                112              BRA     endOP
-00001130  6100 0048                113  isOR        BSR     outaddress      *prints current address
-00001134  43F9 0000130C            114              LEA     ORstring,A1     *Loads ORstring for printing
-0000113A  103C 000D                115              MOVE.B  #13,D0          *Sets up trap
-0000113E  4E4F                     116              TRAP    #15
-00001140  6000 FF16                117              BRA     endOP
-00001144  6100 0034                118  isADD       BSR     outaddress      *prints current address
-00001148  43F9 0000130F            119              LEA     ADDstring,A1     *Loads ADDstring for printing
-0000114E  103C 000D                120              MOVE.B  #13,D0          *Sets up trap
-00001152  4E4F                     121              TRAP    #15
-00001154  6000 FF02                122              BRA     endOP
-00001158  6100 0020                123  isADDA      BSR     outaddress      *prints current address
-0000115C  43F9 00001313            124              LEA     ADDAstring,A1   *Loads ADDstring for printing
-00001162  103C 000D                125              MOVE.B  #13,D0          *Sets up trap
-00001166  4E4F                     126              TRAP    #15
-00001168  6000 FEEE                127              BRA     endOP
-0000116C                           128              
-0000116C                           129  *Masks to make comparisons easier
-0000116C  3400                     130  compMask    MOVE.W  D0,D2           *Gets fresh copy of D0
-0000116E  0242 F1C0                131              ANDI.W  #opMask,D2      *Masks D2 for rest of comparisons
-00001172  4E75                     132              RTS
-00001174  0242 FF00                133  firstByte   ANDI.W  #BitMask15to8,D2   *Masks D2 for the first byte
-00001178  4E75                     134              RTS
-0000117A                           135              
-0000117A                           136  *prints address
-0000117A  3F02                     137  outaddress  MOVE.W  D2,-(sp)        *Saves D2
-0000117C  340D                     138              MOVE.W  A5,D2           *Moves current address to D2
-0000117E  6100 0030                139              BSR     n2ascii         *prints current address
-00001182  341F                     140              MOVE.W  (sp)+,D2        *Loads D2
-00001184  1239 000012F6            141              MOVE.B  space,D1        *Loads ascii space in D1
-0000118A  103C 0006                142              MOVE.B  #6,D0           *Sets up trap
-0000118E  4E4F                     143              TRAP    #15
-00001190  4E75                     144              RTS
-00001192                           145              
-00001192                           146  *prints word 'DATA '            
-00001192  43F9 000012FA            147  isData      LEA     datastring,A1   *Loads datastring for printing
-00001198  103C 000E                148              MOVE.B  #14,D0          *Sets up Trap
-0000119C  4E4F                     149              TRAP    #15
-0000119E                           150  *prints the data
-0000119E  6100 0010                151              BSR     n2ascii         *Prints out the data
-000011A2  43F9 000012F7            152              LEA     newline,A1      *Sets up trap for new line
-000011A8  103C 000E                153              MOVE.B  #14,D0
-000011AC  4E4F                     154              TRAP    #15
-000011AE  4E75                     155              RTS
-000011B0                           156  **************************************************
-000011B0                           157  *Takes the word hex in D2 and prints it to screen*
-000011B0                           158  **************************************************
-000011B0                           159  
-000011B0  183C 000C                160  n2ascii     MOVE.B  #12,D4          *Sets up D4 as counter.
-000011B4  3602                     161  n2ascii2    MOVE.W  D2,D3           *Moves to D3 to work on there 
-000011B6  E86B                     162              LSR.W   D4,D3           
-000011B8  0243 000F                163              ANDI.W  #$000F,D3       *Masks to check last nibble
-000011BC  B63C 0000                164              CMP.B   #$0,D3          *Chekcs if D3 is equal to 0
-000011C0  6700 0086                165              BEQ     print0
-000011C4  B63C 0001                166              CMP.B   #$1,D3          *Chekcs if D3 is equal to 1
-000011C8  6700 0088                167              BEQ     print1
-000011CC  B63C 0002                168              CMP.B   #$2,D3          *Chekcs if D3 is equal to 2
-000011D0  6700 008A                169              BEQ     print2
-000011D4  B63C 0003                170              CMP.B   #$3,D3          *Chekcs if D3 is equal to 3
-000011D8  6700 008C                171              BEQ     print3
-000011DC  B63C 0004                172              CMP.B   #$4,D3          *Chekcs if D3 is equal to 4
-000011E0  6700 008E                173              BEQ     print4
-000011E4  B63C 0005                174              CMP.B   #$5,D3          *Chekcs if D3 is equal to 5
-000011E8  6700 0090                175              BEQ     print5
-000011EC  B63C 0006                176              CMP.B   #$6,D3          *Chekcs if D3 is equal to 6
-000011F0  6700 0092                177              BEQ     print6
-000011F4  B63C 0007                178              CMP.B   #$7,D3          *Chekcs if D3 is equal to 7
-000011F8  6700 0094                179              BEQ     print7
-000011FC  B63C 0008                180              CMP.B   #$8,D3          *Chekcs if D3 is equal to 8
-00001200  6700 0096                181              BEQ     print8
-00001204  B63C 0009                182              CMP.B   #$9,D3          *Chekcs if D3 is equal to 9
-00001208  6700 0098                183              BEQ     print9
-0000120C  B63C 000A                184              CMP.B   #$A,D3          *Chekcs if D3 is equal to A
-00001210  6700 009A                185              BEQ     printA
-00001214  B63C 000B                186              CMP.B   #$B,D3          *Chekcs if D3 is equal to B
-00001218  6700 009C                187              BEQ     printB
-0000121C  B63C 000C                188              CMP.B   #$C,D3          *Chekcs if D3 is equal to C
-00001220  6700 009E                189              BEQ     printC
-00001224  B63C 000D                190              CMP.B   #$D,D3          *Chekcs if D3 is equal to D
-00001228  6700 00A0                191              BEQ     printD
-0000122C  B63C 000E                192              CMP.B   #$E,D3          *Chekcs if D3 is equal to E
-00001230  6700 00A2                193              BEQ     printE
-00001234  B63C 000F                194              CMP.B   #$F,D3          *Checks if D3 is equal to F
-00001238  6700 00A4                195              BEQ     printF
-0000123C  5904                     196  n2acheck    SUB.B   #4,D4           *Decrements our counter
-0000123E  B83C 0000                197              CMP.B   #0,D4           *Checks if counter reached 0
-00001242  6C00 FF70                198              BGE     n2ascii2        *Returns to top of loop to continue        
-00001246  4E75                     199              RTS                     *Else return to caller
-00001248                           200  
-00001248  4281                     201  print0      CLR.L   D1              *Clears D1
-0000124A  123C 0030                202              MOVE.B  #$30,D1         *Sets D1 as ascii 0
-0000124E  6000 0098                203              BRA     printchar       *prints the character
-00001252  4281                     204  print1      CLR.L   D1              *Clears D1
-00001254  123C 0031                205              MOVE.B  #$31,D1         *Sets D1 as ascii 1
-00001258  6000 008E                206              BRA     printchar       *prints the character
-0000125C  4281                     207  print2      CLR.L   D1              *Clears D1
-0000125E  123C 0032                208              MOVE.B  #$32,D1         *Sets D1 as ascii 2
-00001262  6000 0084                209              BRA     printchar       *prints the character
-00001266  4281                     210  print3      CLR.L   D1              *Clears D1
-00001268  123C 0033                211              MOVE.B  #$33,D1         *Sets D1 as ascii 3
-0000126C  6000 007A                212              BRA     printchar       *prints the character
-00001270  4281                     213  print4      CLR.L   D1              *Clears D1
-00001272  123C 0034                214              MOVE.B  #$34,D1         *Sets D1 as ascii 4
-00001276  6000 0070                215              BRA     printchar       *prints the character
-0000127A  4281                     216  print5      CLR.L   D1              *Clears D1
-0000127C  123C 0035                217              MOVE.B  #$35,D1         *Sets D1 as ascii 5
-00001280  6000 0066                218              BRA     printchar       *prints the character
-00001284  4281                     219  print6      CLR.L   D1              *Clears D1
-00001286  123C 0036                220              MOVE.B  #$36,D1         *Sets D1 as ascii 6
-0000128A  6000 005C                221              BRA     printchar       *prints the character
-0000128E  4281                     222  print7      CLR.L   D1              *Clears D1
-00001290  123C 0037                223              MOVE.B  #$37,D1         *Sets D1 as ascii 7
-00001294  6000 0052                224              BRA     printchar       *prints the character
-00001298  4281                     225  print8      CLR.L   D1              *Clears D1
-0000129A  123C 0038                226              MOVE.B  #$38,D1         *Sets D1 as ascii 8
-0000129E  6000 0048                227              BRA     printchar       *prints the character
-000012A2  4281                     228  print9      CLR.L   D1              *Clears D1
-000012A4  123C 0039                229              MOVE.B  #$39,D1         *Sets D1 as ascii 9
-000012A8  6000 003E                230              BRA     printchar       *prints the character
-000012AC  4281                     231  printA      CLR.L   D1              *Clears D1
-000012AE  123C 0041                232              MOVE.B  #$41,D1         *Sets D1 as ascii A
-000012B2  6000 0034                233              BRA     printchar       *prints the character
-000012B6  4281                     234  printB      CLR.L   D1              *Clears D1
-000012B8  123C 0042                235              MOVE.B  #$42,D1         *Sets D1 as ascii B
-000012BC  6000 002A                236              BRA     printchar       *prints the character
-000012C0  4281                     237  printC      CLR.L   D1              *Clears D1
-000012C2  123C 0043                238              MOVE.B  #$43,D1         *Sets D1 as ascii C
-000012C6  6000 0020                239              BRA     printchar       *prints the character
-000012CA  4281                     240  printD      CLR.L   D1              *Clears D1
-000012CC  123C 0044                241              MOVE.B  #$44,D1         *Sets D1 as ascii D
-000012D0  6000 0016                242              BRA     printchar       *prints the character
-000012D4  4281                     243  printE      CLR.L   D1              *Clears D1
-000012D6  123C 0045                244              MOVE.B  #$45,D1         *Sets D1 as ascii E
-000012DA  6000 000C                245              BRA     printchar       *prints the character         
-000012DE  4281                     246  printF      CLR.L   D1              *Clears D1
-000012E0  123C 0046                247              MOVE.B  #$46,D1         *Sets D1 as ascii F
-000012E4  6000 0002                248              BRA     printchar       *prints the character
-000012E8  103C 0006                249  printchar   MOVE.B  #6,D0           *Sets up Trap
-000012EC  4E4F                     250              TRAP    #15
-000012EE  6000 FF4C                251              BRA     n2acheck        *returns to n2ascii
-000012F2                           252              
-000012F2                           253  
-000012F2                           254  end_search    
-000012F2                           255  
-000012F2  FFFF FFFF                256      SIMHALT             ; halt simulator
-000012F6                           257  
-000012F6                           258  * Put variables and constants here
-000012F6                           259  
-000012F6= 20                       260  space       DC.B    $20         *space
-000012F7  =0000000D                261  CR          EQU     $0D         *Carriage return
-000012F7  =0000000A                262  LF          EQU     $0A         *Line Feed
-000012F7= 0D 0A 00                 263  newline     DC.B    CR,LF,0     *New Line
-000012FA  =00000002                264  byte        EQU     2           *How much to move the search address.
-000012FA                           265                                  *2 bytes because we're searching for a word
-000012FA  =00001000                266  cur_address EQU     $00001000   *Start of search
-000012FA  =00001030                267  test_end    EQU     $00001030   *End of search
-000012FA                           268  mydata      REG     D0-D7/A0-A6  *Used for pushing registers to stack
-000012FA= 44 41 54 41 20 00        269  datastring  DC.B    'DATA ',0   *Data string
-00001300= 4E 4F 50 00              270  NOPstring   DC.B    'NOP',0     *NOP string
-00001304= 45 4F 52 00              271  EORstring   DC.B    'EOR',0     *EOR string
-00001308= 4F 52 49 00              272  ORIstring   DC.B    'ORI',0     *ORI string
-0000130C= 4F 52 00                 273  ORstring    DC.B    'OR',0      *OR string
-0000130F= 41 44 44 00              274  ADDstring   DC.B    'ADD',0     *ADD string
-00001313= 41 44 44 41 00           275  ADDAstring  DC.B    'ADDA',0     *ADDA string
-00001318                           276  
-00001318  =00004E71                277  nop_code    EQU     $4E71       *Hex for NOP
-00001318  =0000FF00                278  BitMask15to8 EQU     $FF00       *Mask for showing first two bytes, 0'ing last 2
-00001318  =0000F1C0                279  opMask      EQU     $F1C0       *Masks word so first byte and OP mode are visible
-00001318                           280                                  *The rest of the word are 0's
-00001318  =0000B100                281  eorb_code   EQU     %1011000100000000   *Binary of EOR.B, masked
-00001318  =0000B140                282  eorw_code   EQU     %1011000101000000   *Binary of EOR.W, masked
-00001318  =0000B180                283  eorl_code   EQU     %1011000110000000   *Binary of EOR.L, masked
-00001318  =00000000                284  ori_code    EQU     $0000               *Hex of first two bytes of ORI
-00001318                           285                                          *last 2 bytes don't matter for compare
-00001318  =00008000                286  orbDn_code  EQU     %1000000000000000   *Binary of OR.B -> Dn
-00001318  =00008040                287  orwDn_code  EQU     %1000000001000000   *Binary of OR.W -> Dn
-00001318  =00008080                288  orlDn_code  EQU     %1000000010000000   *Binary of OR.L -> Dn
-00001318  =00008100                289  orbEA_code  EQU     %1000000100000000   *Binary of OR.B -> EA
-00001318  =00008140                290  orwEA_code  EQU     %1000000101000000   *Binary of OR.W -> EA
-00001318  =00008180                291  orlEA_code  EQU     %1000000110000000   *Binary of OR.L -> EA
-00001318  =0000D000                292  addbDn_code EQU     %1101000000000000   *Binary of ADD.B -> Dn
-00001318  =0000D040                293  addwDn_code EQU     %1101000001000000   *Binary of ADD.W -> Dn
-00001318  =0000D080                294  addlDn_code EQU     %1101000010000000   *Binary of ADD.L -> Dn
-00001318  =0000D100                295  addbEA_code EQU     %1101000100000000   *Binary of ADD.B -> EA
-00001318  =0000D140                296  addwEA_code EQU     %1101000101000000   *Binary of ADD.W -> EA
-00001318  =0000D180                297  addlEA_code EQU     %1101000110000000   *Binary of ADD.L -> EA
-00001318  =0000D0C0                298  addaw_code  EQU     %1101000011000000   *Binary of ADDA.W
-00001318  =0000D1C0                299  addal_code  EQU     %1101000111000000   *Binary of ADDA.L
-00001318                           300  
-00001318                           301      END    START        ; last line of source
+0000102E  6000 007A                 33              BRA     compare_NOP     *compares the NOP op code
+00001032  6000 0296                 34  endNOP      BRA     compare_RTS     *Compares the RTS op code
+00001036                            35  endRTS
+00001036  6100 050A                 36              BSR     maskMulDivL     *Masks to compare to MULS.L and DIVS.L
+0000103A  6000 01AA                 37              BRA     compare_MULSL   *Compares the MULS.L op code
+0000103E  6000 01B2                 38  endMULSL    BRA     compare_DIVSL   *Compares the DIVS.L op code
+00001042                            39  endDIVSL
+00001042  6100 04F6                 40              BSR     mask15to6       *Masks to compare BCLR
+00001046  6000 0232                 41              BRA     compare_BCLRI   *Compare to BCLR with an immidiate
+0000104A  6000 0272                 42  endBCLRI    BRA     compare_JSR     *Compare to JSR
+0000104E                            43  endJSR
+0000104E  6100 04E2                 44              BSR     mask15to7       *Masks to compare to MoveM
+00001052  6000 00FE                 45              BRA     compare_MOVEM   *Compares to MoveM
+00001056                            46  endMOVEM
+00001056  6100 04CA                 47              BSR     mask15to8       *Masks to the first byte
+0000105A  6000 005A                 48              BRA     compare_ORI     *Compares the ORI op codes
+0000105E  6000 01D2                 49  endORI      BRA     compare_CMPI    *Compares the CMPI op code
+00001062  6000 022E                 50  endCMPI     BRA     compare_Bcc     *Compares the Bcc op codes
+00001066                            51  endBcc
+00001066  6100 04B2                 52              BSR     compMask        *Masks D2 to make comparisons easier
+0000106A  6000 0086                 53              BRA     compare_EOR     *Compares the EOR op codes
+0000106E  6000 0050                 54  endEOR      BRA     compare_OR      *Compares the OR op codes
+00001072  6000 009A                 55  endOR       BRA     compare_ADD     *Compares the ADD op codes
+00001076  6000 00EE                 56  endADD      BRA     compare_MOVEA   *Compares the MOVEA op codes
+0000107A  6000 011A                 57  endMOVEA    BRA     compare_SUB     *Compares the SUB op codes
+0000107E  6000 014A                 58  endSUB      BRA     compare_SUBQ    *Compares the SUBQ op codes
+00001082  6000 017A                 59  endSUBQ     BRA     compare_MULSW   *Compares the MULS.W op code
+00001086  6000 0182                 60  endMULSW    BRA     compare_DIVSW   *Compares the DIVS.W op code
+0000108A  6000 018A                 61  endDIVSW    BRA     compare_CMP     *Compares the CMP op codes
+0000108E  6000 01F6                 62  endCMP      BRA     compare_BCLR    *Compares the BCLR without immidate op code
+00001092                            63  endBCLR
+00001092  6100 0496                 64              BSR     mask15to12      *Masks D2 to first 4 bits
+00001096  6000 00E2                 65              BRA     compare_MOVE    *Compares the MOVE op codes
+0000109A  6000 01A2                 66  endMOVE     BRA     compare_shift   *Compares LSL,LSR, ASL, and ASR
+0000109E                            67  endshift
+0000109E                            68                                      *if we get here, the operation is unknown
+0000109E  3400                      69              MOVE.W  D0,D2           *Restores D2 to default
+000010A0  6100 04B0                 70              BSR     outaddress      *Data unknown, just print the address
+000010A4  6100 04C4                 71              BSR     isData          *And then the data
+000010A8  4E75                      72  endOP       RTS                     *Returns to caller
+000010AA                            73  
+000010AA                            74  *Comparison subroutines, broken up by Operation
+000010AA                            75  compare_NOP
+000010AA  B47C 4E71                 76              CMP.W   #nop_code,D2    *Compares to NOP
+000010AE  6700 0226                 77              BEQ     isNOP           *Skips the return if it is NOP
+000010B2  6000 FF7E                 78              BRA     endNOP
+000010B6                            79  
+000010B6                            80  compare_ORI
+000010B6  B47C 0000                 81              CMP.W   #ori_code,D2    *Compares to ORI
+000010BA  6700 0242                 82              BEQ     isORI
+000010BE  609E                      83              BRA     endORI
+000010C0                            84              
+000010C0                            85  compare_OR
+000010C0  B47C 8000                 86              CMP.W   #orbDn_code,D2  *Compares to ORI.B -> Dn
+000010C4  6700 024C                 87              BEQ     isOR
+000010C8  B47C 8040                 88              CMP.W   #orwDn_code,D2  *Compares to ORI.W -> Dn
+000010CC  6700 0244                 89              BEQ     isOR
+000010D0  B47C 8080                 90              CMP.W   #orlDn_code,D2  *Compares to ORI.L -> Dn
+000010D4  6700 023C                 91              BEQ     isOR
+000010D8  B47C 8100                 92              CMP.W   #orbEA_code,D2  *Compares to ORI.B -> EA
+000010DC  6700 0234                 93              BEQ     isOR
+000010E0  B47C 8140                 94              CMP.W   #orwEA_code,D2  *Compares to ORI.W -> EA
+000010E4  6700 022C                 95              BEQ     isOR
+000010E8  B47C 8180                 96              CMP.W   #orlEA_code,D2  *Compares to ORI.L -> EA
+000010EC  6700 0224                 97              BEQ     isOR
+000010F0  6080                      98              BRA     endOR
+000010F2                            99              
+000010F2                           100  compare_EOR
+000010F2  B47C B100                101              CMP.W   #eorb_code,D2   *Compares to EOR.B
+000010F6  6700 01F2                102              BEQ     isEOR
+000010FA  B47C B140                103              CMP.W   #eorw_code,D2   *Compares to EOR.W
+000010FE  6700 01EA                104              BEQ     isEOR
+00001102  B47C B180                105              CMP.W   #eorl_code,D2   *Compares to EOR.L
+00001106  6700 01E2                106              BEQ     isEOR
+0000110A  6000 FF62                107              BRA     endEOR
+0000110E                           108              
+0000110E                           109  compare_ADD
+0000110E  B47C D000                110              CMP.W   #addbDn_code,D2 *Compares to ADD.B -> Dn
+00001112  6700 0212                111              BEQ     isADD
+00001116  B47C D040                112              CMP.W   #addwDn_code,D2 *Compares to ADD.W -> Dn
+0000111A  6700 020A                113              BEQ     isADD
+0000111E  B47C D080                114              CMP.W   #addlDn_code,D2 *Compares to ADD.L -> Dn
+00001122  6700 0202                115              BEQ     isADD
+00001126  B47C D100                116              CMP.W   #addbEA_code,D2 *Compares to ADD.B -> EA
+0000112A  6700 01FA                117              BEQ     isADD
+0000112E  B47C D140                118              CMP.W   #addwEA_code,D2 *Compares to ADD.W -> EA
+00001132  6700 01F2                119              BEQ     isADD
+00001136  B47C D180                120              CMP.W   #addlEA_code,D2 *Compares to ADD.L -> EA
+0000113A  6700 01EA                121              BEQ     isADD
+0000113E  B47C D0C0                122              CMP.W   #addaw_code,D2  *Compares to ADDA.W
+00001142  6700 01F6                123              BEQ     isADDA
+00001146  B47C D1C0                124              CMP.W   #addal_code,D2  *Compares to ADDA.L
+0000114A  6700 01EE                125              BEQ     isADDA
+0000114E  6000 FF26                126              BRA     endADD
+00001152                           127  
+00001152                           128  compare_MOVEM
+00001152  B47C 4880                129              CMP.W   #movemr2m_code,D2 *Compares to MOVEM Register to memory
+00001156  6700 01F6                130              BEQ     isMOVEM
+0000115A  B47C 4C80                131              CMP.W   #movemm2r_code,D2 *Compares to MOVEM memory to register
+0000115E  6700 01EE                132              BEQ     isMOVEM
+00001162  6000 FEF2                133              BRA     endMOVEM
+00001166                           134  
+00001166                           135  compare_MOVEA
+00001166  B47C 3040                136              CMP.W   #moveaw_code,D2 *Compares to MOVEA word operation
+0000116A  6700 01F6                137              BEQ     isMOVEA
+0000116E  B47C 2040                138              CMP.W   #moveal_code,D2 *Compares to MOVEA long operation
+00001172  6700 01EE                139              BEQ     isMOVEA
+00001176  6000 FF02                140              BRA     endMOVEA
+0000117A                           141  
+0000117A                           142  compare_MOVE
+0000117A  B47C 1000                143              CMP.W   #moveb_code,D2  *Compares to MOVE byte operation
+0000117E  6700 01F6                144              BEQ     isMOVE
+00001182  B47C 3000                145              CMP.W   #movew_code,D2  *Compares to MOVE word operation
+00001186  6700 01EE                146              BEQ     isMOVE
+0000118A  B47C 2000                147              CMP.W   #movel_code,D2  *Compares to MOVE long operation
+0000118E  6700 01E6                148              BEQ     isMOVE
+00001192  6000 FF06                149              BRA     endMOVE
+00001196                           150  
+00001196                           151  compare_SUB
+00001196  B47C 9000                152              CMP.W   #subbDn_code,D2 *Compares to SUB.B -> Dn
+0000119A  6700 01EE                153              BEQ     isSUB
+0000119E  B47C 9040                154              CMP.W   #subwDn_code,D2 *Compares to SUB.W -> Dn
+000011A2  6700 01E6                155              BEQ     isSUB
+000011A6  B47C 9080                156              CMP.W   #sublDn_code,D2 *Compares to SUB.L -> Dn
+000011AA  6700 01DE                157              BEQ     isSUB
+000011AE  B47C 9100                158              CMP.W   #subbEA_code,D2 *Compares to SUB.B -> EA
+000011B2  6700 01D6                159              BEQ     isSUB
+000011B6  B47C 9140                160              CMP.W   #subwEA_code,D2 *Compares to SUB.W -> EA
+000011BA  6700 01CE                161              BEQ     isSUB
+000011BE  B47C 9180                162              CMP.W   #sublEA_code,D2 *Compares to SUB.L -> EA
+000011C2  6700 01C6                163              BEQ     isSUB
+000011C6  6000 FEB6                164              BRA     endSUB
+000011CA                           165  
+000011CA                           166  compare_SUBQ
+000011CA  B47C 5100                167              CMP.W   #subqb_code,D2   *Compares to SUBQ.B
+000011CE  6700 01CE                168              BEQ     isSUBQ
+000011D2  B47C 5140                169              CMP.W   #subqw_code,D2   *Compares to SUBQ.W
+000011D6  6700 01C6                170              BEQ     isSUBQ
+000011DA  B47C 5180                171              CMP.W   #subql_code,D2   *Compares to SUBQ.L
+000011DE  6700 01BE                172              BEQ     isSUBQ
+000011E2  6000 FE9E                173              BRA     endSUBQ
+000011E6                           174  
+000011E6                           175  compare_MULSL
+000011E6  B47C 0800                176              CMP.W   #mulsl_code,D2  *Compares to MULS.L
+000011EA  6700 01C6                177              BEQ     isMULS
+000011EE  6000 FE4E                178              BRA     endMULSL
+000011F2                           179  
+000011F2                           180  compare_DIVSL
+000011F2  B47C 0840                181              CMP.W   #divsl_code,D2  *Compares to DIVS.L
+000011F6  6700 01CE                182              BEQ     isDIVS
+000011FA  6000 FE46                183              BRA     endDIVSL
+000011FE                           184   
+000011FE                           185  compare_MULSW
+000011FE  B47C C1C0                186              CMP.W   #mulsw_code,D2  *Compares to MULS.W
+00001202  6700 01AE                187              BEQ     isMULS
+00001206  6000 FE7E                188              BRA     endMULSW
+0000120A                           189  
+0000120A                           190  compare_DIVSW
+0000120A  B47C 81C0                191              CMP.W   #divsw_code,D2  *Compares to DIVS.W
+0000120E  6700 01B6                192              BEQ     isDIVS
+00001212  6000 FE76                193              BRA     endDIVSW
+00001216                           194  
+00001216                           195  compare_CMP
+00001216  B47C B000                196              CMP.W   #cmpb_code,D2   *Compares to CMP.B
+0000121A  6700 01BE                197              BEQ     isCMP
+0000121E  B47C B040                198              CMP.W   #cmpw_code,D2   *Compares to CMP.W
+00001222  6700 01B6                199              BEQ     isCMP
+00001226  B47C B080                200              CMP.W   #cmpl_code,D2   *Compares to CMP.L
+0000122A  6700 01AE                201              BEQ     isCMP
+0000122E  6000 FE5E                202              BRA     endCMP
+00001232                           203  
+00001232                           204  compare_CMPI
+00001232  B47C 0C00                205              CMP.W   #cmpi_code,D2   *Compares to CMPI
+00001236  6700 01B6                206              BEQ     isCMPI
+0000123A  6000 FE26                207              BRA     endCMPI
+0000123E                           208  
+0000123E                           209  compare_shift
+0000123E  6100 030A                210              BSR     maskShift        *Masks to shift type and direction
+00001242  B47C E008                211              CMP.W   #lsr_code,D2    *Compares to LSR
+00001246  6700 01BA                212              BEQ     isLSR
+0000124A  B47C E108                213              CMP.W   #lsl_code,D2    *Compares to LSL
+0000124E  6700 01C6                214              BEQ     isLSL
+00001252  B47C E000                215              CMP.W   #asr_code,D2    *Compares to ASR
+00001256  6700 01D2                216              BEQ     isASR
+0000125A  B47C E100                217              CMP.W   #asl_code,D2    *Compares to ASL
+0000125E  6700 01DE                218              BEQ     isASL
+00001262  B47C E018                219              CMP.W   #ror_code,D2    *Compares to ROR
+00001266  6700 01EA                220              BEQ     isROR
+0000126A  B47C E118                221              CMP.W   #rol_code,D2    *Compares to ROL
+0000126E  6700 01F6                222              BEQ     isROL
+00001272  6100 02B6                223              BSR     mask15to12      *Returns the 15to12 mask
+00001276  6000 FE26                224              BRA     endshift
+0000127A                           225  
+0000127A                           226  compare_BCLRI
+0000127A  B47C 0880                227              CMP.W   #bclri_code,D2  *Compares to BCLR with an immidiate
+0000127E  6700 01FA                228              BEQ     isBCLR
+00001282  6000 FDC6                229              BRA     endBCLRI
+00001286                           230  
+00001286                           231  compare_BCLR
+00001286  B47C 0180                232              CMP.W   #bclr_code,D2   *Compares to BCLR
+0000128A  6700 01EE                233              BEQ     isBCLR
+0000128E  6000 FE02                234              BRA     endBCLR
+00001292                           235  
+00001292                           236  compare_Bcc
+00001292  B47C 6500                237              CMP.W   #bcs_code,D2    *Compares to BCS
+00001296  6700 01F6                238              BEQ     isBCS
+0000129A  B47C 6C00                239              CMP.W   #bge_code,D2    *Compares to BGE
+0000129E  6700 0202                240              BEQ     isBGE
+000012A2  B47C 6D00                241              CMP.W   #blt_code,D2    *Compares to BLT
+000012A6  6700 020E                242              BEQ     isBLT
+000012AA  B47C 6800                243              CMP.W   #bvc_code,D2    *Compares to BVC
+000012AE  6700 021A                244              BEQ     isBVC
+000012B2  B47C 6000                245              CMP.W   #bra_code,D2    *Compares to BRA
+000012B6  6700 0226                246              BEQ     isBRA
+000012BA  6000 FDAA                247              BRA     endBcc
+000012BE                           248  
+000012BE                           249  compare_JSR
+000012BE  B47C 4E80                250              CMP.W   #jsr_code,D2    *Compares to JSR
+000012C2  6700 022E                251              BEQ     isJSR
+000012C6  6000 FD86                252              BRA     endJSR
+000012CA                           253  
+000012CA                           254  compare_RTS
+000012CA  B47C 4E75                255              CMP.W   #rts_code,D2    *Compares to RTS
+000012CE  6700 0236                256              BEQ     isRTS
+000012D2  6000 FD62                257              BRA     endRTS
+000012D6                           258  
+000012D6                           259  *If compare is successful, we go to one of the isX
+000012D6  6100 027A                260  isNOP       BSR     outaddress      *prints current address
+000012DA  43F9 000016D8            261              LEA     NOPstring,A1    *Loads NOPstring for printing
+000012E0  103C 000D                262              MOVE.B  #13,D0          *Sets up trap
+000012E4  4E4F                     263              TRAP    #15
+000012E6  6000 FDC0                264              BRA     endOP            
+000012EA  6100 0266                265  isEOR       BSR     outaddress      *prints current address
+000012EE  43F9 000016DC            266              LEA     EORstring,A1    *Loads EORstring for printing
+000012F4  103C 000D                267              MOVE.B  #13,D0          *Sets up trap
+000012F8  4E4F                     268              TRAP    #15
+000012FA  6000 FDAC                269              BRA     endOP            
+000012FE  6100 0252                270  isORI       BSR     outaddress      *prints current address
+00001302  43F9 000016E0            271              LEA     ORIstring,A1    *Loads ORIstring for printing
+00001308  103C 000D                272              MOVE.B  #13,D0          *Sets up trap
+0000130C  4E4F                     273              TRAP    #15
+0000130E  6000 FD98                274              BRA     endOP
+00001312  6100 023E                275  isOR        BSR     outaddress      *prints current address
+00001316  43F9 000016E4            276              LEA     ORstring,A1     *Loads ORstring for printing
+0000131C  103C 000D                277              MOVE.B  #13,D0          *Sets up trap
+00001320  4E4F                     278              TRAP    #15
+00001322  6000 FD84                279              BRA     endOP
+00001326  6100 022A                280  isADD       BSR     outaddress      *prints current address
+0000132A  43F9 000016E7            281              LEA     ADDstring,A1     *Loads ADDstring for printing
+00001330  103C 000D                282              MOVE.B  #13,D0          *Sets up trap
+00001334  4E4F                     283              TRAP    #15
+00001336  6000 FD70                284              BRA     endOP
+0000133A  6100 0216                285  isADDA      BSR     outaddress      *prints current address
+0000133E  43F9 000016EB            286              LEA     ADDAstring,A1   *Loads ADDstring for printing
+00001344  103C 000D                287              MOVE.B  #13,D0          *Sets up trap
+00001348  4E4F                     288              TRAP    #15
+0000134A  6000 FD5C                289              BRA     endOP
+0000134E  6100 0202                290  isMOVEM     BSR     outaddress      *prints current address
+00001352  43F9 000016F0            291              LEA     MOVEMstring,A1  *Loads MOVEMstring for printing
+00001358  103C 000D                292              MOVE.B  #13,D0          *Sets up trap
+0000135C  4E4F                     293              TRAP    #15
+0000135E  6000 FD48                294              BRA     endOP
+00001362  6100 01EE                295  isMOVEA     BSR     outaddress      *prints current address
+00001366  43F9 000016F6            296              LEA     MOVEAstring,A1  *Loads MOVEAstring for printing
+0000136C  103C 000D                297              MOVE.B  #13,D0          *Sets up trap
+00001370  4E4F                     298              TRAP    #15
+00001372  6000 FD34                299              BRA     endOP
+00001376  6100 01DA                300  isMOVE      BSR     outaddress      *prints current address
+0000137A  43F9 000016FC            301              LEA     MOVEstring,A1   *Loads MOVEstring for printing
+00001380  103C 000D                302              MOVE.B  #13,D0          *Sets up trap
+00001384  4E4F                     303              TRAP    #15
+00001386  6000 FD20                304              BRA     endOP
+0000138A  6100 01C6                305  isSUB       BSR     outaddress      *prints current address
+0000138E  43F9 00001701            306              LEA     SUBstring,A1    *Loads SUBstring for printing
+00001394  103C 000D                307              MOVE.B  #13,D0          *Sets up trap
+00001398  4E4F                     308              TRAP    #15
+0000139A  6000 FD0C                309              BRA     endOP
+0000139E  6100 01B2                310  isSUBQ      BSR     outaddress      *prints current address
+000013A2  43F9 00001705            311              LEA     SUBQstring,A1   *Loads SUBQstring for printing
+000013A8  103C 000D                312              MOVE.B  #13,D0          *Sets up trap
+000013AC  4E4F                     313              TRAP    #15
+000013AE  6000 FCF8                314              BRA     endOP
+000013B2  6100 019E                315  isMULS      BSR     outaddress      *prints current address
+000013B6  43F9 00001709            316              LEA     MULSstring,A1   *Loads MULSstring for printing
+000013BC  103C 000D                317              MOVE.B  #13,D0          *Sets up trap
+000013C0  4E4F                     318              TRAP    #15
+000013C2  6000 FCE4                319              BRA     endOP
+000013C6  6100 018A                320  isDIVS      BSR     outaddress      *prints current address
+000013CA  43F9 0000170E            321              LEA     DIVSstring,A1   *Loads DIVSstring for printing
+000013D0  103C 000D                322              MOVE.B  #13,D0          *Sets up trap
+000013D4  4E4F                     323              TRAP    #15
+000013D6  6000 FCD0                324              BRA     endOP
+000013DA  6100 0176                325  isCMP       BSR     outaddress      *prints current address
+000013DE  43F9 00001713            326              LEA     CMPstring,A1    *Loads CMPstring for printing
+000013E4  103C 000D                327              MOVE.B  #13,D0          *Sets up trap
+000013E8  4E4F                     328              TRAP    #15
+000013EA  6000 FCBC                329              BRA     endOP
+000013EE  6100 0162                330  isCMPI      BSR     outaddress      *prints current address
+000013F2  43F9 00001717            331              LEA     CMPIstring,A1   *Loads CMPIstring for printing
+000013F8  103C 000D                332              MOVE.B  #13,D0          *Sets up trap
+000013FC  4E4F                     333              TRAP    #15
+000013FE  6000 FCA8                334              BRA     endOP
+00001402  6100 014E                335  isLSR       BSR     outaddress      *prints current address
+00001406  43F9 00001720            336              LEA     LSRstring,A1    *Loads LSRstring for printing
+0000140C  103C 000D                337              MOVE.B  #13,D0          *Sets up trap
+00001410  4E4F                     338              TRAP    #15
+00001412  6000 FC94                339              BRA     endOP
+00001416  6100 013A                340  isLSL       BSR     outaddress      *prints current address
+0000141A  43F9 0000171C            341              LEA     LSLstring,A1    *Loads LSLstring for printing
+00001420  103C 000D                342              MOVE.B  #13,D0          *Sets up trap
+00001424  4E4F                     343              TRAP    #15
+00001426  6000 FC80                344              BRA     endOP
+0000142A  6100 0126                345  isASR       BSR     outaddress      *prints current address
+0000142E  43F9 00001728            346              LEA     ASRstring,A1    *Loads ASRstring for printing
+00001434  103C 000D                347              MOVE.B  #13,D0          *Sets up trap
+00001438  4E4F                     348              TRAP    #15
+0000143A  6000 FC6C                349              BRA     endOP 
+0000143E  6100 0112                350  isASL       BSR     outaddress      *prints current address
+00001442  43F9 00001724            351              LEA     ASLstring,A1    *Loads ASLstring for printing
+00001448  103C 000D                352              MOVE.B  #13,D0          *Sets up trap
+0000144C  4E4F                     353              TRAP    #15
+0000144E  6000 FC58                354              BRA     endOP
+00001452  6100 00FE                355  isROR       BSR     outaddress      *prints current address
+00001456  43F9 00001730            356              LEA     RORstring,A1    *Loads RORstring for printing
+0000145C  103C 000D                357              MOVE.B  #13,D0          *Sets up trap
+00001460  4E4F                     358              TRAP    #15
+00001462  6000 FC44                359              BRA     endOP
+00001466  6100 00EA                360  isROL       BSR     outaddress      *prints current address
+0000146A  43F9 0000172C            361              LEA     ROLstring,A1    *Loads ROLstring for printing
+00001470  103C 000D                362              MOVE.B  #13,D0          *Sets up trap
+00001474  4E4F                     363              TRAP    #15
+00001476  6000 FC30                364              BRA     endOP
+0000147A  6100 00D6                365  isBCLR      BSR     outaddress      *prints current address
+0000147E  43F9 00001734            366              LEA     BCLRstring,A1   *Loads BCLRstring for printing
+00001484  103C 000D                367              MOVE.B  #13,D0          *Sets up trap
+00001488  4E4F                     368              TRAP    #15
+0000148A  6000 FC1C                369              BRA     endOP
+0000148E  6100 00C2                370  isBCS       BSR     outaddress      *prints current address
+00001492  43F9 00001739            371              LEA     BCSstring,A1    *Loads BCSstring for printing
+00001498  103C 000D                372              MOVE.B  #13,D0          *Sets up trap
+0000149C  4E4F                     373              TRAP    #15
+0000149E  6000 FC08                374              BRA     endOP
+000014A2  6100 00AE                375  isBGE       BSR     outaddress      *prints current address
+000014A6  43F9 0000173D            376              LEA     BGEstring,A1    *Loads BGEstring for printing
+000014AC  103C 000D                377              MOVE.B  #13,D0          *Sets up trap
+000014B0  4E4F                     378              TRAP    #15
+000014B2  6000 FBF4                379              BRA     endOP
+000014B6  6100 009A                380  isBLT       BSR     outaddress      *prints current address
+000014BA  43F9 00001741            381              LEA     BLTstring,A1    *Loads BLTstring for printing
+000014C0  103C 000D                382              MOVE.B  #13,D0          *Sets up trap
+000014C4  4E4F                     383              TRAP    #15
+000014C6  6000 FBE0                384              BRA     endOP
+000014CA  6100 0086                385  isBVC       BSR     outaddress      *prints current address
+000014CE  43F9 00001745            386              LEA     BVCstring,A1    *Loads BVCstring for printing
+000014D4  103C 000D                387              MOVE.B  #13,D0          *Sets up trap
+000014D8  4E4F                     388              TRAP    #15
+000014DA  6000 FBCC                389              BRA     endOP
+000014DE  6100 0072                390  isBRA       BSR     outaddress      *prints current address
+000014E2  43F9 00001749            391              LEA     BRAstring,A1    *Loads BRAstring for printing
+000014E8  103C 000D                392              MOVE.B  #13,D0          *Sets up trap
+000014EC  4E4F                     393              TRAP    #15
+000014EE  6000 FBB8                394              BRA     endOP
+000014F2  6100 005E                395  isJSR       BSR     outaddress      *prints current address
+000014F6  43F9 0000174D            396              LEA     JSRstring,A1    *Loads JSRstring for printing
+000014FC  103C 000D                397              MOVE.B  #13,D0          *Sets up trap
+00001500  4E4F                     398              TRAP    #15
+00001502  6000 FBA4                399              BRA     endOP
+00001506  6100 004A                400  isRTS       BSR     outaddress      *prints current address
+0000150A  43F9 00001751            401              LEA     RTSstring,A1    *Loads RTSstring for printing
+00001510  103C 000D                402              MOVE.B  #13,D0          *Sets up trap
+00001514  4E4F                     403              TRAP    #15
+00001516  6000 FB90                404              BRA     endOP
+0000151A                           405  
+0000151A                           406  
+0000151A                           407  *Masks to make comparisons easier
+0000151A  3400                     408  compMask    MOVE.W  D0,D2           *Gets fresh copy of D0
+0000151C  0242 F1C0                409              ANDI.W  #opMask,D2      *Masks D2 for rest of comparisons
+00001520  4E75                     410              RTS
+00001522  3400                     411  mask15to8   MOVE.W  D0,D2               *Gets fresh copy of D0
+00001524  0242 FF00                412              ANDI.W  #BitMask15to8,D2    *Masks D2 for the first byte
+00001528  4E75                     413              RTS
+0000152A  3400                     414  mask15to12  MOVE.W  D0,D2               *Gets fresh copy of D0
+0000152C  0242 F000                415              ANDI.W  #BitMask15to12,D2   *Masks first bit
+00001530  4E75                     416              RTS
+00001532  3400                     417  mask15to7   MOVE.W  D0,D2               *Gets fresh copy of D0
+00001534  0242 FF80                418              ANDI.W  #BitMask15to7,D2    *Masks D2
+00001538  4E75                     419              RTS
+0000153A  3400                     420  mask15to6   MOVE.W  D0,D2               *Gets fresh copy of D0
+0000153C  0242 FFC0                421              ANDI.W  #BitMask15to6,D2    *Masks D2
+00001540  4E75                     422              RTS
+00001542  3400                     423  maskMulDivl MOVE.W  D0,D2               *Gets fresh copy of D0
+00001544  0242 8BC0                424              ANDI.W  #BitMaskMulDivl,D2  *Masks D2
+00001548  4E75                     425              RTS
+0000154A  3400                     426  maskShift   MOVE.W  D0,D2               *Gets a fresh copy of D0
+0000154C  0242 F118                427              ANDI.W  #BitMaskShifts,D2   *Masks D2
+00001550  4E75                     428              RTS
+00001552                           429              
+00001552                           430  *prints address
+00001552  3F02                     431  outaddress  MOVE.W  D2,-(sp)        *Saves D2
+00001554  340D                     432              MOVE.W  A5,D2           *Moves current address to D2
+00001556  6100 0030                433              BSR     n2ascii         *prints current address
+0000155A  341F                     434              MOVE.W  (sp)+,D2        *Loads D2
+0000155C  1239 000016CE            435              MOVE.B  space,D1        *Loads ascii space in D1
+00001562  103C 0006                436              MOVE.B  #6,D0           *Sets up trap
+00001566  4E4F                     437              TRAP    #15
+00001568  4E75                     438              RTS
+0000156A                           439              
+0000156A                           440  *prints word 'DATA '            
+0000156A  43F9 000016D2            441  isData      LEA     datastring,A1   *Loads datastring for printing
+00001570  103C 000E                442              MOVE.B  #14,D0          *Sets up Trap
+00001574  4E4F                     443              TRAP    #15
+00001576                           444  *prints the data
+00001576  6100 0010                445              BSR     n2ascii         *Prints out the data
+0000157A  43F9 000016CF            446              LEA     newline,A1      *Sets up trap for new line
+00001580  103C 000E                447              MOVE.B  #14,D0
+00001584  4E4F                     448              TRAP    #15
+00001586  4E75                     449              RTS
+00001588                           450  **************************************************
+00001588                           451  *Takes the word hex in D2 and prints it to screen*
+00001588                           452  **************************************************
+00001588                           453  
+00001588  183C 000C                454  n2ascii     MOVE.B  #12,D4          *Sets up D4 as counter.
+0000158C  3602                     455  n2ascii2    MOVE.W  D2,D3           *Moves to D3 to work on there 
+0000158E  E86B                     456              LSR.W   D4,D3           
+00001590  0243 000F                457              ANDI.W  #$000F,D3       *Masks to check last nibble
+00001594  B63C 0000                458              CMP.B   #$0,D3          *Chekcs if D3 is equal to 0
+00001598  6700 0086                459              BEQ     print0
+0000159C  B63C 0001                460              CMP.B   #$1,D3          *Chekcs if D3 is equal to 1
+000015A0  6700 0088                461              BEQ     print1
+000015A4  B63C 0002                462              CMP.B   #$2,D3          *Chekcs if D3 is equal to 2
+000015A8  6700 008A                463              BEQ     print2
+000015AC  B63C 0003                464              CMP.B   #$3,D3          *Chekcs if D3 is equal to 3
+000015B0  6700 008C                465              BEQ     print3
+000015B4  B63C 0004                466              CMP.B   #$4,D3          *Chekcs if D3 is equal to 4
+000015B8  6700 008E                467              BEQ     print4
+000015BC  B63C 0005                468              CMP.B   #$5,D3          *Chekcs if D3 is equal to 5
+000015C0  6700 0090                469              BEQ     print5
+000015C4  B63C 0006                470              CMP.B   #$6,D3          *Chekcs if D3 is equal to 6
+000015C8  6700 0092                471              BEQ     print6
+000015CC  B63C 0007                472              CMP.B   #$7,D3          *Chekcs if D3 is equal to 7
+000015D0  6700 0094                473              BEQ     print7
+000015D4  B63C 0008                474              CMP.B   #$8,D3          *Chekcs if D3 is equal to 8
+000015D8  6700 0096                475              BEQ     print8
+000015DC  B63C 0009                476              CMP.B   #$9,D3          *Chekcs if D3 is equal to 9
+000015E0  6700 0098                477              BEQ     print9
+000015E4  B63C 000A                478              CMP.B   #$A,D3          *Chekcs if D3 is equal to A
+000015E8  6700 009A                479              BEQ     printA
+000015EC  B63C 000B                480              CMP.B   #$B,D3          *Chekcs if D3 is equal to B
+000015F0  6700 009C                481              BEQ     printB
+000015F4  B63C 000C                482              CMP.B   #$C,D3          *Chekcs if D3 is equal to C
+000015F8  6700 009E                483              BEQ     printC
+000015FC  B63C 000D                484              CMP.B   #$D,D3          *Chekcs if D3 is equal to D
+00001600  6700 00A0                485              BEQ     printD
+00001604  B63C 000E                486              CMP.B   #$E,D3          *Chekcs if D3 is equal to E
+00001608  6700 00A2                487              BEQ     printE
+0000160C  B63C 000F                488              CMP.B   #$F,D3          *Checks if D3 is equal to F
+00001610  6700 00A4                489              BEQ     printF
+00001614  5904                     490  n2acheck    SUB.B   #4,D4           *Decrements our counter
+00001616  B83C 0000                491              CMP.B   #0,D4           *Checks if counter reached 0
+0000161A  6C00 FF70                492              BGE     n2ascii2        *Returns to top of loop to continue        
+0000161E  4E75                     493              RTS                     *Else return to caller
+00001620                           494  
+00001620  4281                     495  print0      CLR.L   D1              *Clears D1
+00001622  123C 0030                496              MOVE.B  #$30,D1         *Sets D1 as ascii 0
+00001626  6000 0098                497              BRA     printchar       *prints the character
+0000162A  4281                     498  print1      CLR.L   D1              *Clears D1
+0000162C  123C 0031                499              MOVE.B  #$31,D1         *Sets D1 as ascii 1
+00001630  6000 008E                500              BRA     printchar       *prints the character
+00001634  4281                     501  print2      CLR.L   D1              *Clears D1
+00001636  123C 0032                502              MOVE.B  #$32,D1         *Sets D1 as ascii 2
+0000163A  6000 0084                503              BRA     printchar       *prints the character
+0000163E  4281                     504  print3      CLR.L   D1              *Clears D1
+00001640  123C 0033                505              MOVE.B  #$33,D1         *Sets D1 as ascii 3
+00001644  6000 007A                506              BRA     printchar       *prints the character
+00001648  4281                     507  print4      CLR.L   D1              *Clears D1
+0000164A  123C 0034                508              MOVE.B  #$34,D1         *Sets D1 as ascii 4
+0000164E  6000 0070                509              BRA     printchar       *prints the character
+00001652  4281                     510  print5      CLR.L   D1              *Clears D1
+00001654  123C 0035                511              MOVE.B  #$35,D1         *Sets D1 as ascii 5
+00001658  6000 0066                512              BRA     printchar       *prints the character
+0000165C  4281                     513  print6      CLR.L   D1              *Clears D1
+0000165E  123C 0036                514              MOVE.B  #$36,D1         *Sets D1 as ascii 6
+00001662  6000 005C                515              BRA     printchar       *prints the character
+00001666  4281                     516  print7      CLR.L   D1              *Clears D1
+00001668  123C 0037                517              MOVE.B  #$37,D1         *Sets D1 as ascii 7
+0000166C  6000 0052                518              BRA     printchar       *prints the character
+00001670  4281                     519  print8      CLR.L   D1              *Clears D1
+00001672  123C 0038                520              MOVE.B  #$38,D1         *Sets D1 as ascii 8
+00001676  6000 0048                521              BRA     printchar       *prints the character
+0000167A  4281                     522  print9      CLR.L   D1              *Clears D1
+0000167C  123C 0039                523              MOVE.B  #$39,D1         *Sets D1 as ascii 9
+00001680  6000 003E                524              BRA     printchar       *prints the character
+00001684  4281                     525  printA      CLR.L   D1              *Clears D1
+00001686  123C 0041                526              MOVE.B  #$41,D1         *Sets D1 as ascii A
+0000168A  6000 0034                527              BRA     printchar       *prints the character
+0000168E  4281                     528  printB      CLR.L   D1              *Clears D1
+00001690  123C 0042                529              MOVE.B  #$42,D1         *Sets D1 as ascii B
+00001694  6000 002A                530              BRA     printchar       *prints the character
+00001698  4281                     531  printC      CLR.L   D1              *Clears D1
+0000169A  123C 0043                532              MOVE.B  #$43,D1         *Sets D1 as ascii C
+0000169E  6000 0020                533              BRA     printchar       *prints the character
+000016A2  4281                     534  printD      CLR.L   D1              *Clears D1
+000016A4  123C 0044                535              MOVE.B  #$44,D1         *Sets D1 as ascii D
+000016A8  6000 0016                536              BRA     printchar       *prints the character
+000016AC  4281                     537  printE      CLR.L   D1              *Clears D1
+000016AE  123C 0045                538              MOVE.B  #$45,D1         *Sets D1 as ascii E
+000016B2  6000 000C                539              BRA     printchar       *prints the character         
+000016B6  4281                     540  printF      CLR.L   D1              *Clears D1
+000016B8  123C 0046                541              MOVE.B  #$46,D1         *Sets D1 as ascii F
+000016BC  6000 0002                542              BRA     printchar       *prints the character
+000016C0  103C 0006                543  printchar   MOVE.B  #6,D0           *Sets up Trap
+000016C4  4E4F                     544              TRAP    #15
+000016C6  6000 FF4C                545              BRA     n2acheck        *returns to n2ascii
+000016CA                           546              
+000016CA                           547  
+000016CA                           548  end_search    
+000016CA                           549  
+000016CA  FFFF FFFF                550      SIMHALT             ; halt simulator
+000016CE                           551  
+000016CE                           552  * Put variables and constants here
+000016CE                           553  
+000016CE= 20                       554  space       DC.B    $20         *space
+000016CF  =0000000D                555  CR          EQU     $0D         *Carriage return
+000016CF  =0000000A                556  LF          EQU     $0A         *Line Feed
+000016CF= 0D 0A 00                 557  newline     DC.B    CR,LF,0     *New Line
+000016D2  =00000002                558  byte        EQU     2           *How much to move the search address.
+000016D2                           559                                  *2 bytes because we're searching for a word
+000016D2  =00001000                560  cur_address EQU     $00001000   *Start of search
+000016D2  =00001030                561  test_end    EQU     $00001030   *End of search
+000016D2                           562  mydata      REG     D0-D7/A0-A6  *Used for pushing registers to stack
+000016D2                           563  
+000016D2                           564  *Strings for I/O
+000016D2= 44 41 54 41 20 00        565  datastring  DC.B    'DATA ',0   *Data string
+000016D8= 4E 4F 50 00              566  NOPstring   DC.B    'NOP',0     *NOP string
+000016DC= 45 4F 52 00              567  EORstring   DC.B    'EOR',0     *EOR string
+000016E0= 4F 52 49 00              568  ORIstring   DC.B    'ORI',0     *ORI string
+000016E4= 4F 52 00                 569  ORstring    DC.B    'OR',0      *OR string
+000016E7= 41 44 44 00              570  ADDstring   DC.B    'ADD',0     *ADD string
+000016EB= 41 44 44 41 00           571  ADDAstring  DC.B    'ADDA',0     *ADDA string
+000016F0= 4D 4F 56 45 4D 00        572  MOVEMstring DC.B    'MOVEM',0   *MOVEM string
+000016F6= 4D 4F 56 45 41 00        573  MOVEAstring DC.B    'MOVEA',0   *MOVEA string
+000016FC= 4D 4F 56 45 00           574  MOVEstring  DC.B    'MOVE',0    *MOVE string
+00001701= 53 55 42 00              575  SUBstring   DC.B    'SUB',0     *SUB string
+00001705= 53 55 42 00              576  SUBQstring  DC.B    'SUB',0     *SUBQ string
+00001709= 4D 55 4C 53 00           577  MULSstring  DC.B    'MULS',0    *MULS string
+0000170E= 44 49 56 53 00           578  DIVSstring  DC.B    'DIVS',0    *DIVS string
+00001713= 43 4D 50 00              579  CMPstring   DC.B    'CMP',0     *CMP string
+00001717= 43 4D 50 49 00           580  CMPIstring  DC.B    'CMPI',0    *CMPI string
+0000171C= 4C 53 4C 00              581  LSLstring   DC.B    'LSL',0     *LSL string
+00001720= 4C 53 52 00              582  LSRstring   DC.B    'LSR',0     *LSR string
+00001724= 41 53 4C 00              583  ASLstring   DC.B    'ASL',0     *ASL string
+00001728= 41 53 52 00              584  ASRstring   DC.B    'ASR',0     *ASR string
+0000172C= 52 4F 4C 00              585  ROLstring   DC.B    'ROL',0     *ROL string
+00001730= 52 4F 52 00              586  RORstring   DC.B    'ROR',0     *ROR string
+00001734= 42 43 4C 52 00           587  BCLRstring  DC.B    'BCLR',0    *BCLR string
+00001739= 42 43 53 00              588  BCSstring   DC.B    'BCS',0     *BCS string
+0000173D= 42 47 45 00              589  BGEstring   DC.B    'BGE',0     *BGE string
+00001741= 42 4C 54 00              590  BLTstring   DC.B    'BLT',0     *BLT string
+00001745= 42 56 43 00              591  BVCstring   DC.B    'BVC',0     *BVC string
+00001749= 42 52 41 00              592  BRAstring   DC.B    'BRA',0     *BRA string
+0000174D= 4A 53 52 00              593  JSRstring   DC.B    'JSR',0     *JSR string
+00001751= 52 54 53 00              594  RTSstring   DC.B    'RTS',0     *RTS strin
+00001755                           595  
+00001755                           596  
+00001755                           597  *Bit Masks
+00001755                           598  
+00001755  =0000F000                599  BitMask15to12 EQU   $F000       *Mask for first byte
+00001755  =00008BC0                600  BitMaskMulDivl EQU  %1000101111000000  *Mask for MULS and DIVS Long
+00001755  =0000FFC0                601  BitMask15to6 EQU    $FFC0       *Mask for showing bits 15 through 6 (BCLR immidiate)
+00001755  =0000FF80                602  BitMask15to7 EQU    $FF80       *Mask for showing bits 15 through 7 (MOVEM)
+00001755  =0000FF00                603  BitMask15to8 EQU    $FF00       *Mask for showing first two bytes, 0'ing last 2
+00001755  =0000F1C0                604  opMask      EQU     $F1C0       *Masks word so first byte and OP mode are visible
+00001755                           605                                  *The rest of the word are 0's
+00001755  =0000F118                606  BitMaskShifts EQU   %1111000100011000   *Masks for the shift op codes
+00001755                           607  
+00001755                           608  *Masked Op codes
+00001755  =00004E71                609  nop_code    EQU     $4E71       *Hex for NOP
+00001755  =0000B100                610  eorb_code   EQU     %1011000100000000   *Binary of EOR.B, masked
+00001755  =0000B140                611  eorw_code   EQU     %1011000101000000   *Binary of EOR.W, masked
+00001755  =0000B180                612  eorl_code   EQU     %1011000110000000   *Binary of EOR.L, masked
+00001755  =00000000                613  ori_code    EQU     $00               *Hex of first two bytes of ORI
+00001755                           614                                          *last 2 bytes don't matter for compare
+00001755  =00008000                615  orbDn_code  EQU     %1000000000000000   *Binary of OR.B -> Dn
+00001755  =00008040                616  orwDn_code  EQU     %1000000001000000   *Binary of OR.W -> Dn
+00001755  =00008080                617  orlDn_code  EQU     %1000000010000000   *Binary of OR.L -> Dn
+00001755  =00008100                618  orbEA_code  EQU     %1000000100000000   *Binary of OR.B -> EA
+00001755  =00008140                619  orwEA_code  EQU     %1000000101000000   *Binary of OR.W -> EA
+00001755  =00008180                620  orlEA_code  EQU     %1000000110000000   *Binary of OR.L -> EA
+00001755  =0000D000                621  addbDn_code EQU     %1101000000000000   *Binary of ADD.B -> Dn
+00001755  =0000D040                622  addwDn_code EQU     %1101000001000000   *Binary of ADD.W -> Dn
+00001755  =0000D080                623  addlDn_code EQU     %1101000010000000   *Binary of ADD.L -> Dn
+00001755  =0000D100                624  addbEA_code EQU     %1101000100000000   *Binary of ADD.B -> EA
+00001755  =0000D140                625  addwEA_code EQU     %1101000101000000   *Binary of ADD.W -> EA
+00001755  =0000D180                626  addlEA_code EQU     %1101000110000000   *Binary of ADD.L -> EA
+00001755  =0000D0C0                627  addaw_code  EQU     %1101000011000000   *Binary of ADDA.W
+00001755  =0000D1C0                628  addal_code  EQU     %1101000111000000   *Binary of ADDA.L
+00001755  =00004880                629  movemr2m_code EQU   %0100100010000000   *Binary of MOVEM from register to memory
+00001755  =00004C80                630  movemm2r_code EQU   %0100110010000000   *Binary of MOVEM from memory to register
+00001755  =00003040                631  moveaw_code EQU     %0011000001000000   *Binary of MOVEA Word
+00001755  =00002040                632  moveal_code EQU     %0010000001000000   *Binary of MOVEA long
+00001755  =00001000                633  moveb_code  EQU     %0001000000000000   *Binary of MOVE byte
+00001755  =00003000                634  movew_code  EQU     %0011000000000000   *Binary of MOVE word
+00001755  =00002000                635  movel_code  EQU     %0010000000000000   *Binary of Move long
+00001755  =00009000                636  subbDn_code EQU     %1001000000000000   *Binary of SUB.B -> Dn
+00001755  =00009040                637  subwDn_code EQU     %1001000001000000   *Binary of SUB.W -> Dn
+00001755  =00009080                638  sublDn_code EQU     %1001000010000000   *Binary of SUB.L -> Dn
+00001755  =00009100                639  subbEA_code EQU     %1001000100000000   *Binary of SUB.B -> EA
+00001755  =00009140                640  subwEA_code EQU     %1001000101000000   *Binary of SUB.W -> EA
+00001755  =00009180                641  sublEA_code EQU     %1001000110000000   *Binary of SUB.L -> EA
+00001755  =00005100                642  subqb_code  EQU     %0101000100000000   *Binary of SUBQ byte
+00001755  =00005140                643  subqw_code  EQU     %0101000101000000   *Binary of SUBQ word
+00001755  =00005180                644  subql_code  EQU     %0101000110000000   *Binary of SUBQ long
+00001755  =00000800                645  mulsl_code  EQU     %0000100000000000   *Binary of MULS.L
+00001755  =00000840                646  divsl_code  EQU     %0000100001000000   *Binary of DIVS.L
+00001755  =0000C1C0                647  mulsw_code  EQU     %1100000111000000   *Binary of MULS.W
+00001755  =000081C0                648  divsw_code  EQU     %1000000111000000   *Binary of DIVS.W
+00001755  =0000B000                649  cmpb_code   EQU     %1011000000000000   *Binary of CMP.B
+00001755  =0000B040                650  cmpw_code   EQU     %1011000001000000   *Binary of CMP.W
+00001755  =0000B080                651  cmpl_code   EQU     %1011000010000000   *Binary of CMP.L
+00001755  =00000C00                652  cmpi_code   EQU     %0000110000000000   *Binary of CMPI
+00001755  =0000E108                653  lsl_code    EQU     %1110000100001000   *Binary of LSL
+00001755  =0000E008                654  lsr_code    EQU     %1110000000001000   *Binary of LSR
+00001755  =0000E100                655  asl_code    EQU     %1110000100000000   *Binary of ASL
+00001755  =0000E000                656  asr_code    EQU     %1110000000000000   *Binary of ASR
+00001755  =0000E118                657  rol_code    EQU     %1110000100011000   *Binary of ROL
+00001755  =0000E018                658  ror_code    EQU     %1110000000011000   *Binary of ROR
+00001755  =00000880                659  bclri_code  EQU     %0000100010000000   *Binary of BCLR with an immidiate
+00001755  =00000180                660  bclr_code   EQU     %0000000110000000   *Binary of BCLR
+00001755  =00006500                661  bcs_code    EQU     %0110010100000000   *Binary of BCS
+00001755  =00006C00                662  bge_code    EQU     %0110110000000000   *Binary of BGE
+00001755  =00006D00                663  blt_code    EQU     %0110110100000000   *Binary of BLT
+00001755  =00006800                664  bvc_code    EQU     %0110100000000000   *Binary of BVC
+00001755  =00006000                665  bra_code    EQU     %0110000000000000   *Binary of BRA
+00001755  =00004E80                666  jsr_code    EQU     %0100111010000000   *Binary of JSR
+00001755  =00004E75                667  rts_code    EQU     %0100111001110101   *Binary of RTS
+00001755                           668  
+00001755                           669      END    START        ; last line of source
 
 No errors detected
 No warnings generated
@@ -312,81 +680,212 @@ SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
 ADDAL_CODE          D1C0
-ADDASTRING          1313
+ADDASTRING          16EB
 ADDAW_CODE          D0C0
 ADDBDN_CODE         D000
 ADDBEA_CODE         D100
 ADDLDN_CODE         D080
 ADDLEA_CODE         D180
-ADDSTRING           130F
+ADDSTRING           16E7
 ADDWDN_CODE         D040
 ADDWEA_CODE         D140
+ASLSTRING           1724
+ASL_CODE            E100
+ASRSTRING           1728
+ASR_CODE            E000
+BCLRI_CODE          880
+BCLRSTRING          1734
+BCLR_CODE           180
+BCSSTRING           1739
+BCS_CODE            6500
+BGESTRING           173D
+BGE_CODE            6C00
+BITMASK15TO12       F000
+BITMASK15TO6        FFC0
+BITMASK15TO7        FF80
 BITMASK15TO8        FF00
+BITMASKMULDIVL      8BC0
+BITMASKSHIFTS       F118
+BLTSTRING           1741
+BLT_CODE            6D00
+BRASTRING           1749
+BRA_CODE            6000
+BVCSTRING           1745
+BVC_CODE            6800
 BYTE                2
-COMPARE_ADD         10B0
-COMPARE_EOR         1096
-COMPARE_OR          1064
-COMPARE_ORI         105A
-COMPMASK            116C
+CMPB_CODE           B000
+CMPISTRING          1717
+CMPI_CODE           C00
+CMPL_CODE           B080
+CMPSTRING           1713
+CMPW_CODE           B040
+COMPARE_ADD         110E
+COMPARE_BCC         1292
+COMPARE_BCLR        1286
+COMPARE_BCLRI       127A
+COMPARE_CMP         1216
+COMPARE_CMPI        1232
+COMPARE_DIVSL       11F2
+COMPARE_DIVSW       120A
+COMPARE_EOR         10F2
+COMPARE_JSR         12BE
+COMPARE_MOVE        117A
+COMPARE_MOVEA       1166
+COMPARE_MOVEM       1152
+COMPARE_MULSL       11E6
+COMPARE_MULSW       11FE
+COMPARE_NOP         10AA
+COMPARE_OR          10C0
+COMPARE_ORI         10B6
+COMPARE_RTS         12CA
+COMPARE_SHIFT       123E
+COMPARE_SUB         1196
+COMPARE_SUBQ        11CA
+COMPMASK            151A
 CR                  D
 CUR_ADDRESS         1000
-DATASTRING          12FA
-ENDADD              104E
-ENDEOR              1046
-ENDOP               1058
-ENDOR               104A
-ENDORI              103E
-END_SEARCH          12F2
+DATASTRING          16D2
+DIVSL_CODE          840
+DIVSSTRING          170E
+DIVSW_CODE          81C0
+ENDADD              1076
+ENDBCC              1066
+ENDBCLR             1092
+ENDBCLRI            104A
+ENDCMP              108E
+ENDCMPI             1062
+ENDDIVSL            1042
+ENDDIVSW            108A
+ENDEOR              106E
+ENDJSR              104E
+ENDMOVE             109A
+ENDMOVEA            107A
+ENDMOVEM            1056
+ENDMULSL            103E
+ENDMULSW            1086
+ENDNOP              1032
+ENDOP               10A8
+ENDOR               1072
+ENDORI              105E
+ENDRTS              1036
+ENDSHIFT            109E
+ENDSUB              107E
+ENDSUBQ             1082
+END_SEARCH          16CA
 EORB_CODE           B100
 EORL_CODE           B180
-EORSTRING           1304
+EORSTRING           16DC
 EORW_CODE           B140
-FIRSTBYTE           1174
 GETOP               102C
-ISADD               1144
-ISADDA              1158
-ISDATA              1192
-ISEOR               1108
-ISNOP               10F4
-ISOR                1130
-ISORI               111C
+ISADD               1326
+ISADDA              133A
+ISASL               143E
+ISASR               142A
+ISBCLR              147A
+ISBCS               148E
+ISBGE               14A2
+ISBLT               14B6
+ISBRA               14DE
+ISBVC               14CA
+ISCMP               13DA
+ISCMPI              13EE
+ISDATA              156A
+ISDIVS              13C6
+ISEOR               12EA
+ISJSR               14F2
+ISLSL               1416
+ISLSR               1402
+ISMOVE              1376
+ISMOVEA             1362
+ISMOVEM             134E
+ISMULS              13B2
+ISNOP               12D6
+ISOR                1312
+ISORI               12FE
+ISROL               1466
+ISROR               1452
+ISRTS               1506
+ISSUB               138A
+ISSUBQ              139E
+JSRSTRING           174D
+JSR_CODE            4E80
 LF                  A
 LOOP                101C
+LSLSTRING           171C
+LSL_CODE            E108
+LSRSTRING           1720
+LSR_CODE            E008
+MASK15TO12          152A
+MASK15TO6           153A
+MASK15TO7           1532
+MASK15TO8           1522
+MASKMULDIVL         1542
+MASKSHIFT           154A
+MOVEAL_CODE         2040
+MOVEASTRING         16F6
+MOVEAW_CODE         3040
+MOVEB_CODE          1000
+MOVEL_CODE          2000
+MOVEMM2R_CODE       4C80
+MOVEMR2M_CODE       4880
+MOVEMSTRING         16F0
+MOVESTRING          16FC
+MOVEW_CODE          3000
+MULSL_CODE          800
+MULSSTRING          1709
+MULSW_CODE          C1C0
 MYDATA              7FFF
-N2ACHECK            123C
-N2ASCII             11B0
-N2ASCII2            11B4
-NEWLINE             12F7
-NOPSTRING           1300
+N2ACHECK            1614
+N2ASCII             1588
+N2ASCII2            158C
+NEWLINE             16CF
+NOPSTRING           16D8
 NOP_CODE            4E71
 OPMASK              F1C0
 ORBDN_CODE          8000
 ORBEA_CODE          8100
-ORISTRING           1308
+ORISTRING           16E0
 ORI_CODE            0
 ORLDN_CODE          8080
 ORLEA_CODE          8180
-ORSTRING            130C
+ORSTRING            16E4
 ORWDN_CODE          8040
 ORWEA_CODE          8140
-OUTADDRESS          117A
-PRINT0              1248
-PRINT1              1252
-PRINT2              125C
-PRINT3              1266
-PRINT4              1270
-PRINT5              127A
-PRINT6              1284
-PRINT7              128E
-PRINT8              1298
-PRINT9              12A2
-PRINTA              12AC
-PRINTB              12B6
-PRINTC              12C0
-PRINTCHAR           12E8
-PRINTD              12CA
-PRINTE              12D4
-PRINTF              12DE
-SPACE               12F6
+OUTADDRESS          1552
+PRINT0              1620
+PRINT1              162A
+PRINT2              1634
+PRINT3              163E
+PRINT4              1648
+PRINT5              1652
+PRINT6              165C
+PRINT7              1666
+PRINT8              1670
+PRINT9              167A
+PRINTA              1684
+PRINTB              168E
+PRINTC              1698
+PRINTCHAR           16C0
+PRINTD              16A2
+PRINTE              16AC
+PRINTF              16B6
+ROLSTRING           172C
+ROL_CODE            E118
+RORSTRING           1730
+ROR_CODE            E018
+RTSSTRING           1751
+RTS_CODE            4E75
+SPACE               16CE
 START               1000
+SUBBDN_CODE         9000
+SUBBEA_CODE         9100
+SUBLDN_CODE         9080
+SUBLEA_CODE         9180
+SUBQB_CODE          5100
+SUBQL_CODE          5180
+SUBQSTRING          1705
+SUBQW_CODE          5140
+SUBSTRING           1701
+SUBWDN_CODE         9040
+SUBWEA_CODE         9140
 TEST_END            1030
