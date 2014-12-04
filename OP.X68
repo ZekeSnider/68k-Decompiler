@@ -667,10 +667,6 @@ jsr_code    EQU     %0100111010000000   *Binary of JSR
 rts_code    EQU     %0100111001110101   *Binary of RTS
 
     END    START        ; last line of source
-
-
-
-
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~

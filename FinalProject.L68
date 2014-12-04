@@ -1,0 +1,1931 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.02
+Created On: 12/4/2014 3:19:42 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :Group 6 68k Decompiler
+00000000                             3  * Written by :Zeke Snider and Joseph Sturtevan
+00000000                             4  * Date       :12/4/2014
+00000000                             5  * Description:Decompiler for CSS 422 Hardware
+00000000                             6  *-----------------------------------------------------------
+00001000                             7      ORG    $1000
+00001000                             8  START:                  ; first instruction of program
+00001000                             9  * Put program code here
+00001000  4440                      10              NEG     D0              *Test NEG
+00001002  4240                      11              CLR.W   D0              *Clears D0
+00001004  4BF9 00001000             12              LEA     cur_address,A5  *Load start address
+0000100A  4DF9 00001004             13              LEA     test_end,A6     *Load end address
+00001010                            14          
+00001010  3015                      15  loop        MOVE.W  (A5),D0         *Gets the data of where the pointer is at
+00001012  41F9 0000A000             16              LEA     OUTPUT_START,A0 *Sets up output for EA
+00001018  6100 000C                 17              BSR     getOP           *Gets the data at add
+0000101C  544D                      18              ADDQ.W  #byte,A5        *Incrementing the pointer one word
+0000101E  BACE                      19              CMPA.W  A6,A5           *Seeing if we're at end of the search area
+00001020  6E00 0D2A                 20              BGT     end_search      *go to end if we leave search area
+00001024  60EA                      21              BRA     loop            *else go back to the beginning of the loop
+00001026                            22              
+00001026  3400                      23  getOP       MOVE.W  D0,D2           *Moves data to D2 to use
+00001028  6000 0082                 24              BRA     compare_NOP     *compares the NOP op code
+0000102C  6000 02A0                 25  endNOP      BRA     compare_RTS     *Compares the RTS op code
+00001030                            26  endRTS
+00001030  6100 0528                 27              BSR     maskMulDivL     *Masks to compare to MULS.L and DIVS.L
+00001034  6000 01B4                 28              BRA     compare_MULSL   *Compares the MULS.L op code
+00001038  6000 01BC                 29  endMULSL    BRA     compare_DIVSL   *Compares the DIVS.L op code
+0000103C                            30  endDIVSL
+0000103C  6100 0514                 31              BSR     mask15to6       *Masks to compare BCLR
+00001040  6000 023C                 32              BRA     compare_BCLRI   *Compare to BCLR with an immidiate
+00001044  6000 027C                 33  endBCLRI    BRA     compare_JSR     *Compare to JSR
+00001048                            34  endJSR
+00001048  6100 0500                 35              BSR     mask15to7       *Masks to compare to MoveM
+0000104C  6000 0108                 36              BRA     compare_MOVEM   *Compares to MoveM
+00001050                            37  endMOVEM
+00001050  6100 04E8                 38              BSR     mask15to8       *Masks to the first byte
+00001054  6000 0062                 39              BRA     compare_ORI     *Compares the ORI op codes
+00001058  6000 01DC                 40  endORI      BRA     compare_CMPI    *Compares the CMPI op code
+0000105C  6000 0238                 41  endCMPI     BRA     compare_Bcc     *Compares the Bcc op codes
+00001060  6000 0278                 42  endBcc      BRA     compare_NEG     *Compares the NEG op code
+00001064                            43  endNEG
+00001064  6100 04CC                 44              BSR     compMask        *Masks D2 to make comparisons easier
+00001068  6000 008C                 45              BRA     compare_EOR     *Compares the EOR op codes
+0000106C  6000 0054                 46  endEOR      BRA     compare_OR      *Compares the OR op codes
+00001070  6000 00A0                 47  endOR       BRA     compare_ADD     *Compares the ADD op codes
+00001074  6000 00F4                 48  endADD      BRA     compare_MOVEA   *Compares the MOVEA op codes
+00001078  6000 0120                 49  endMOVEA    BRA     compare_SUB     *Compares the SUB op codes
+0000107C  6000 0150                 50  endSUB      BRA     compare_SUBQ    *Compares the SUBQ op codes
+00001080  6000 0180                 51  endSUBQ     BRA     compare_MULSW   *Compares the MULS.W op code
+00001084  6000 0188                 52  endMULSW    BRA     compare_DIVSW   *Compares the DIVS.W op code
+00001088  6000 0190                 53  endDIVSW    BRA     compare_CMP     *Compares the CMP op codes
+0000108C  6000 01FC                 54  endCMP      BRA     compare_BCLR    *Compares the BCLR without immidate op code
+00001090                            55  endBCLR
+00001090  6100 04B0                 56              BSR     mask15to12      *Masks D2 to first 4 bits
+00001094  6000 00E8                 57              BRA     compare_MOVE    *Compares the MOVE op codes
+00001098  6000 01A8                 58  endMOVE     BRA     compare_shift   *Compares LSL,LSR, ASL, and ASR
+0000109C                            59  endshift
+0000109C                            60                                      *if we get here, the operation is unknown
+0000109C  3400                      61              MOVE.W  D0,D2           *Restores D2 to default
+0000109E  6100 04CA                 62              BSR     outaddress      *Data unknown, just print the address
+000010A2  6100 04DE                 63              BSR     isData          *And then the data
+000010A6  6100 0C94                 64  endOP       BSR     IO_PRINT_OUTPUT *Prints EA output
+000010AA  4E75                      65              RTS                     *Returns to caller
+000010AC                            66  
+000010AC                            67  *Comparison subroutines, broken up by Operation
+000010AC                            68  compare_NOP
+000010AC  B47C 4E71                 69              CMP.W   #nop_code,D2    *Compares to NOP
+000010B0  6700 0234                 70              BEQ     isNOP           *Skips the return if it is NOP
+000010B4  6000 FF76                 71              BRA     endNOP
+000010B8                            72  
+000010B8                            73  compare_ORI
+000010B8  B47C 0000                 74              CMP.W   #ori_code,D2    *Compares to ORI
+000010BC  6700 0250                 75              BEQ     isORI
+000010C0  6096                      76              BRA     endORI
+000010C2                            77              
+000010C2                            78  compare_OR
+000010C2  B47C 8000                 79              CMP.W   #orbDn_code,D2  *Compares to ORI.B -> Dn
+000010C6  6700 025A                 80              BEQ     isOR
+000010CA  B47C 8040                 81              CMP.W   #orwDn_code,D2  *Compares to ORI.W -> Dn
+000010CE  6700 0252                 82              BEQ     isOR
+000010D2  B47C 8080                 83              CMP.W   #orlDn_code,D2  *Compares to ORI.L -> Dn
+000010D6  6700 024A                 84              BEQ     isOR
+000010DA  B47C 8100                 85              CMP.W   #orbEA_code,D2  *Compares to ORI.B -> EA
+000010DE  6700 0242                 86              BEQ     isOR
+000010E2  B47C 8140                 87              CMP.W   #orwEA_code,D2  *Compares to ORI.W -> EA
+000010E6  6700 023A                 88              BEQ     isOR
+000010EA  B47C 8180                 89              CMP.W   #orlEA_code,D2  *Compares to ORI.L -> EA
+000010EE  6700 0232                 90              BEQ     isOR
+000010F2  6000 FF7C                 91              BRA     endOR
+000010F6                            92              
+000010F6                            93  compare_EOR
+000010F6  B47C B100                 94              CMP.W   #eorb_code,D2   *Compares to EOR.B
+000010FA  6700 01FE                 95              BEQ     isEOR
+000010FE  B47C B140                 96              CMP.W   #eorw_code,D2   *Compares to EOR.W
+00001102  6700 01F6                 97              BEQ     isEOR
+00001106  B47C B180                 98              CMP.W   #eorl_code,D2   *Compares to EOR.L
+0000110A  6700 01EE                 99              BEQ     isEOR
+0000110E  6000 FF5C                100              BRA     endEOR
+00001112                           101              
+00001112                           102  compare_ADD
+00001112  B47C D000                103              CMP.W   #addbDn_code,D2 *Compares to ADD.B -> Dn
+00001116  6700 021E                104              BEQ     isADD
+0000111A  B47C D040                105              CMP.W   #addwDn_code,D2 *Compares to ADD.W -> Dn
+0000111E  6700 0216                106              BEQ     isADD
+00001122  B47C D080                107              CMP.W   #addlDn_code,D2 *Compares to ADD.L -> Dn
+00001126  6700 020E                108              BEQ     isADD
+0000112A  B47C D100                109              CMP.W   #addbEA_code,D2 *Compares to ADD.B -> EA
+0000112E  6700 0206                110              BEQ     isADD
+00001132  B47C D140                111              CMP.W   #addwEA_code,D2 *Compares to ADD.W -> EA
+00001136  6700 01FE                112              BEQ     isADD
+0000113A  B47C D180                113              CMP.W   #addlEA_code,D2 *Compares to ADD.L -> EA
+0000113E  6700 01F6                114              BEQ     isADD
+00001142  B47C D0C0                115              CMP.W   #addaw_code,D2  *Compares to ADDA.W
+00001146  6700 0202                116              BEQ     isADDA
+0000114A  B47C D1C0                117              CMP.W   #addal_code,D2  *Compares to ADDA.L
+0000114E  6700 01FA                118              BEQ     isADDA
+00001152  6000 FF20                119              BRA     endADD
+00001156                           120  
+00001156                           121  compare_MOVEM
+00001156  B47C 4880                122              CMP.W   #movemr2m_code,D2 *Compares to MOVEM Register to memory
+0000115A  6700 0202                123              BEQ     isMOVEM
+0000115E  B47C 4C80                124              CMP.W   #movemm2r_code,D2 *Compares to MOVEM memory to register
+00001162  6700 01FA                125              BEQ     isMOVEM
+00001166  6000 FEE8                126              BRA     endMOVEM
+0000116A                           127  
+0000116A                           128  compare_MOVEA
+0000116A  B47C 3040                129              CMP.W   #moveaw_code,D2 *Compares to MOVEA word operation
+0000116E  6700 0202                130              BEQ     isMOVEA
+00001172  B47C 2040                131              CMP.W   #moveal_code,D2 *Compares to MOVEA long operation
+00001176  6700 01FA                132              BEQ     isMOVEA
+0000117A  6000 FEFC                133              BRA     endMOVEA
+0000117E                           134  
+0000117E                           135  compare_MOVE
+0000117E  B47C 1000                136              CMP.W   #moveb_code,D2  *Compares to MOVE byte operation
+00001182  6700 0202                137              BEQ     isMOVE
+00001186  B47C 3000                138              CMP.W   #movew_code,D2  *Compares to MOVE word operation
+0000118A  6700 01FA                139              BEQ     isMOVE
+0000118E  B47C 2000                140              CMP.W   #movel_code,D2  *Compares to MOVE long operation
+00001192  6700 01F2                141              BEQ     isMOVE
+00001196  6000 FF00                142              BRA     endMOVE
+0000119A                           143  
+0000119A                           144  compare_SUB
+0000119A  B47C 9000                145              CMP.W   #subbDn_code,D2 *Compares to SUB.B -> Dn
+0000119E  6700 01FA                146              BEQ     isSUB
+000011A2  B47C 9040                147              CMP.W   #subwDn_code,D2 *Compares to SUB.W -> Dn
+000011A6  6700 01F2                148              BEQ     isSUB
+000011AA  B47C 9080                149              CMP.W   #sublDn_code,D2 *Compares to SUB.L -> Dn
+000011AE  6700 01EA                150              BEQ     isSUB
+000011B2  B47C 9100                151              CMP.W   #subbEA_code,D2 *Compares to SUB.B -> EA
+000011B6  6700 01E2                152              BEQ     isSUB
+000011BA  B47C 9140                153              CMP.W   #subwEA_code,D2 *Compares to SUB.W -> EA
+000011BE  6700 01DA                154              BEQ     isSUB
+000011C2  B47C 9180                155              CMP.W   #sublEA_code,D2 *Compares to SUB.L -> EA
+000011C6  6700 01D2                156              BEQ     isSUB
+000011CA  6000 FEB0                157              BRA     endSUB
+000011CE                           158  
+000011CE                           159  compare_SUBQ
+000011CE  B47C 5100                160              CMP.W   #subqb_code,D2   *Compares to SUBQ.B
+000011D2  6700 01DA                161              BEQ     isSUBQ
+000011D6  B47C 5140                162              CMP.W   #subqw_code,D2   *Compares to SUBQ.W
+000011DA  6700 01D2                163              BEQ     isSUBQ
+000011DE  B47C 5180                164              CMP.W   #subql_code,D2   *Compares to SUBQ.L
+000011E2  6700 01CA                165              BEQ     isSUBQ
+000011E6  6000 FE98                166              BRA     endSUBQ
+000011EA                           167  
+000011EA                           168  compare_MULSL
+000011EA  B47C 0800                169              CMP.W   #mulsl_code,D2  *Compares to MULS.L
+000011EE  6700 01D2                170              BEQ     isMULS
+000011F2  6000 FE44                171              BRA     endMULSL
+000011F6                           172  
+000011F6                           173  compare_DIVSL
+000011F6  B47C 0840                174              CMP.W   #divsl_code,D2  *Compares to DIVS.L
+000011FA  6700 01DA                175              BEQ     isDIVS
+000011FE  6000 FE3C                176              BRA     endDIVSL
+00001202                           177   
+00001202                           178  compare_MULSW
+00001202  B47C C1C0                179              CMP.W   #mulsw_code,D2  *Compares to MULS.W
+00001206  6700 01BA                180              BEQ     isMULS
+0000120A  6000 FE78                181              BRA     endMULSW
+0000120E                           182  
+0000120E                           183  compare_DIVSW
+0000120E  B47C 81C0                184              CMP.W   #divsw_code,D2  *Compares to DIVS.W
+00001212  6700 01C2                185              BEQ     isDIVS
+00001216  6000 FE70                186              BRA     endDIVSW
+0000121A                           187  
+0000121A                           188  compare_CMP
+0000121A  B47C B000                189              CMP.W   #cmpb_code,D2   *Compares to CMP.B
+0000121E  6700 01CA                190              BEQ     isCMP
+00001222  B47C B040                191              CMP.W   #cmpw_code,D2   *Compares to CMP.W
+00001226  6700 01C2                192              BEQ     isCMP
+0000122A  B47C B080                193              CMP.W   #cmpl_code,D2   *Compares to CMP.L
+0000122E  6700 01BA                194              BEQ     isCMP
+00001232  6000 FE58                195              BRA     endCMP
+00001236                           196  
+00001236                           197  compare_CMPI
+00001236  B47C 0C00                198              CMP.W   #cmpi_code,D2   *Compares to CMPI
+0000123A  6700 01C2                199              BEQ     isCMPI
+0000123E  6000 FE1C                200              BRA     endCMPI
+00001242                           201  
+00001242                           202  compare_shift
+00001242  6100 031E                203              BSR     maskShift        *Masks to shift type and direction
+00001246  B47C E008                204              CMP.W   #lsr_code,D2    *Compares to LSR
+0000124A  6700 01C6                205              BEQ     isLSR
+0000124E  B47C E108                206              CMP.W   #lsl_code,D2    *Compares to LSL
+00001252  6700 01D2                207              BEQ     isLSL
+00001256  B47C E000                208              CMP.W   #asr_code,D2    *Compares to ASR
+0000125A  6700 01DE                209              BEQ     isASR
+0000125E  B47C E100                210              CMP.W   #asl_code,D2    *Compares to ASL
+00001262  6700 01EA                211              BEQ     isASL
+00001266  B47C E018                212              CMP.W   #ror_code,D2    *Compares to ROR
+0000126A  6700 01F6                213              BEQ     isROR
+0000126E  B47C E118                214              CMP.W   #rol_code,D2    *Compares to ROL
+00001272  6700 0202                215              BEQ     isROL
+00001276  6100 02CA                216              BSR     mask15to12      *Returns the 15to12 mask
+0000127A  6000 FE20                217              BRA     endshift
+0000127E                           218  
+0000127E                           219  compare_BCLRI
+0000127E  B47C 0880                220              CMP.W   #bclri_code,D2  *Compares to BCLR with an immidiate
+00001282  6700 0206                221              BEQ     isBCLR
+00001286  6000 FDBC                222              BRA     endBCLRI
+0000128A                           223  
+0000128A                           224  compare_BCLR
+0000128A  B47C 0180                225              CMP.W   #bclr_code,D2   *Compares to BCLR
+0000128E  6700 01FA                226              BEQ     isBCLR
+00001292  6000 FDFC                227              BRA     endBCLR
+00001296                           228  
+00001296                           229  compare_Bcc
+00001296  B47C 6500                230              CMP.W   #bcs_code,D2    *Compares to BCS
+0000129A  6700 0202                231              BEQ     isBCS
+0000129E  B47C 6C00                232              CMP.W   #bge_code,D2    *Compares to BGE
+000012A2  6700 020E                233              BEQ     isBGE
+000012A6  B47C 6D00                234              CMP.W   #blt_code,D2    *Compares to BLT
+000012AA  6700 021A                235              BEQ     isBLT
+000012AE  B47C 6800                236              CMP.W   #bvc_code,D2    *Compares to BVC
+000012B2  6700 0226                237              BEQ     isBVC
+000012B6  B47C 6000                238              CMP.W   #bra_code,D2    *Compares to BRA
+000012BA  6700 0232                239              BEQ     isBRA
+000012BE  6000 FDA0                240              BRA     endBcc
+000012C2                           241  
+000012C2                           242  compare_JSR
+000012C2  B47C 4E80                243              CMP.W   #jsr_code,D2    *Compares to JSR
+000012C6  6700 023A                244              BEQ     isJSR
+000012CA  6000 FD7C                245              BRA     endJSR
+000012CE                           246  
+000012CE                           247  compare_RTS
+000012CE  B47C 4E75                248              CMP.W   #rts_code,D2    *Compares to RTS
+000012D2  6700 0242                249              BEQ     isRTS
+000012D6  6000 FD58                250              BRA     endRTS
+000012DA                           251  
+000012DA                           252  compare_NEG
+000012DA  B47C 4400                253              CMP.W   #neg_code,D2    *Compares to NEG
+000012DE  6700 024A                254              BEQ     isNEG
+000012E2  6000 FD80                255              BRA     endNEG
+000012E6                           256  
+000012E6                           257  *If compare is successful, we go to one of the isX
+000012E6  6100 0282                258  isNOP       BSR     outaddress      *prints current address
+000012EA  43F9 00001D5A            259              LEA     NOPstring,A1    *Loads NOPstring for printing
+000012F0  103C 000D                260              MOVE.B  #13,D0          *Sets up trap
+000012F4  4E4F                     261              TRAP    #15
+000012F6  6000 FDAE                262              BRA     endOP            
+000012FA  6100 026E                263  isEOR       BSR     outaddress      *prints current address
+000012FE  43F9 00001D5E            264              LEA     EORstring,A1    *Loads EORstring for printing
+00001304  103C 000D                265              MOVE.B  #13,D0          *Sets up trap
+00001308  4E4F                     266              TRAP    #15
+0000130A  6000 FD9A                267              BRA     endOP            
+0000130E  6100 025A                268  isORI       BSR     outaddress      *prints current address
+00001312  43F9 00001D62            269              LEA     ORIstring,A1    *Loads ORIstring for printing
+00001318  103C 000D                270              MOVE.B  #13,D0          *Sets up trap
+0000131C  4E4F                     271              TRAP    #15
+0000131E  6000 FD86                272              BRA     endOP
+00001322  6100 0246                273  isOR        BSR     outaddress      *prints current address
+00001326  43F9 00001D66            274              LEA     ORstring,A1     *Loads ORstring for printing
+0000132C  103C 000D                275              MOVE.B  #13,D0          *Sets up trap
+00001330  4E4F                     276              TRAP    #15
+00001332  6000 FD72                277              BRA     endOP
+00001336  6100 0232                278  isADD       BSR     outaddress      *prints current address
+0000133A  43F9 00001D69            279              LEA     ADDstring,A1     *Loads ADDstring for printing
+00001340  103C 000D                280              MOVE.B  #13,D0          *Sets up trap
+00001344  4E4F                     281              TRAP    #15
+00001346  6000 FD5E                282              BRA     endOP
+0000134A  6100 021E                283  isADDA      BSR     outaddress      *prints current address
+0000134E  43F9 00001D6D            284              LEA     ADDAstring,A1   *Loads ADDstring for printing
+00001354  103C 000D                285              MOVE.B  #13,D0          *Sets up trap
+00001358  4E4F                     286              TRAP    #15
+0000135A  6000 FD4A                287              BRA     endOP
+0000135E  6100 020A                288  isMOVEM     BSR     outaddress      *prints current address
+00001362  43F9 00001D72            289              LEA     MOVEMstring,A1  *Loads MOVEMstring for printing
+00001368  103C 000D                290              MOVE.B  #13,D0          *Sets up trap
+0000136C  4E4F                     291              TRAP    #15
+0000136E  6000 FD36                292              BRA     endOP
+00001372  6100 01F6                293  isMOVEA     BSR     outaddress      *prints current address
+00001376  43F9 00001D78            294              LEA     MOVEAstring,A1  *Loads MOVEAstring for printing
+0000137C  103C 000D                295              MOVE.B  #13,D0          *Sets up trap
+00001380  4E4F                     296              TRAP    #15
+00001382  6000 FD22                297              BRA     endOP
+00001386  6100 01E2                298  isMOVE      BSR     outaddress      *prints current address
+0000138A  43F9 00001D7E            299              LEA     MOVEstring,A1   *Loads MOVEstring for printing
+00001390  103C 000D                300              MOVE.B  #13,D0          *Sets up trap
+00001394  4E4F                     301              TRAP    #15
+00001396  6000 FD0E                302              BRA     endOP
+0000139A  6100 01CE                303  isSUB       BSR     outaddress      *prints current address
+0000139E  43F9 00001D83            304              LEA     SUBstring,A1    *Loads SUBstring for printing
+000013A4  103C 000D                305              MOVE.B  #13,D0          *Sets up trap
+000013A8  4E4F                     306              TRAP    #15
+000013AA  6000 FCFA                307              BRA     endOP
+000013AE  6100 01BA                308  isSUBQ      BSR     outaddress      *prints current address
+000013B2  43F9 00001D87            309              LEA     SUBQstring,A1   *Loads SUBQstring for printing
+000013B8  103C 000D                310              MOVE.B  #13,D0          *Sets up trap
+000013BC  4E4F                     311              TRAP    #15
+000013BE  6000 FCE6                312              BRA     endOP
+000013C2  6100 01A6                313  isMULS      BSR     outaddress      *prints current address
+000013C6  43F9 00001D8B            314              LEA     MULSstring,A1   *Loads MULSstring for printing
+000013CC  103C 000D                315              MOVE.B  #13,D0          *Sets up trap
+000013D0  4E4F                     316              TRAP    #15
+000013D2  6000 FCD2                317              BRA     endOP
+000013D6  6100 0192                318  isDIVS      BSR     outaddress      *prints current address
+000013DA  43F9 00001D90            319              LEA     DIVSstring,A1   *Loads DIVSstring for printing
+000013E0  103C 000D                320              MOVE.B  #13,D0          *Sets up trap
+000013E4  4E4F                     321              TRAP    #15
+000013E6  6000 FCBE                322              BRA     endOP
+000013EA  6100 017E                323  isCMP       BSR     outaddress      *prints current address
+000013EE  43F9 00001D95            324              LEA     CMPstring,A1    *Loads CMPstring for printing
+000013F4  103C 000D                325              MOVE.B  #13,D0          *Sets up trap
+000013F8  4E4F                     326              TRAP    #15
+000013FA  6000 FCAA                327              BRA     endOP
+000013FE  6100 016A                328  isCMPI      BSR     outaddress      *prints current address
+00001402  43F9 00001D99            329              LEA     CMPIstring,A1   *Loads CMPIstring for printing
+00001408  103C 000D                330              MOVE.B  #13,D0          *Sets up trap
+0000140C  4E4F                     331              TRAP    #15
+0000140E  6000 FC96                332              BRA     endOP
+00001412  6100 0156                333  isLSR       BSR     outaddress      *prints current address
+00001416  43F9 00001DA2            334              LEA     LSRstring,A1    *Loads LSRstring for printing
+0000141C  103C 000D                335              MOVE.B  #13,D0          *Sets up trap
+00001420  4E4F                     336              TRAP    #15
+00001422  6000 FC82                337              BRA     endOP
+00001426  6100 0142                338  isLSL       BSR     outaddress      *prints current address
+0000142A  43F9 00001D9E            339              LEA     LSLstring,A1    *Loads LSLstring for printing
+00001430  103C 000D                340              MOVE.B  #13,D0          *Sets up trap
+00001434  4E4F                     341              TRAP    #15
+00001436  6000 FC6E                342              BRA     endOP
+0000143A  6100 012E                343  isASR       BSR     outaddress      *prints current address
+0000143E  43F9 00001DAA            344              LEA     ASRstring,A1    *Loads ASRstring for printing
+00001444  103C 000D                345              MOVE.B  #13,D0          *Sets up trap
+00001448  4E4F                     346              TRAP    #15
+0000144A  6000 FC5A                347              BRA     endOP 
+0000144E  6100 011A                348  isASL       BSR     outaddress      *prints current address
+00001452  43F9 00001DA6            349              LEA     ASLstring,A1    *Loads ASLstring for printing
+00001458  103C 000D                350              MOVE.B  #13,D0          *Sets up trap
+0000145C  4E4F                     351              TRAP    #15
+0000145E  6000 FC46                352              BRA     endOP
+00001462  6100 0106                353  isROR       BSR     outaddress      *prints current address
+00001466  43F9 00001DB2            354              LEA     RORstring,A1    *Loads RORstring for printing
+0000146C  103C 000D                355              MOVE.B  #13,D0          *Sets up trap
+00001470  4E4F                     356              TRAP    #15
+00001472  6000 FC32                357              BRA     endOP
+00001476  6100 00F2                358  isROL       BSR     outaddress      *prints current address
+0000147A  43F9 00001DAE            359              LEA     ROLstring,A1    *Loads ROLstring for printing
+00001480  103C 000D                360              MOVE.B  #13,D0          *Sets up trap
+00001484  4E4F                     361              TRAP    #15
+00001486  6000 FC1E                362              BRA     endOP
+0000148A  6100 00DE                363  isBCLR      BSR     outaddress      *prints current address
+0000148E  43F9 00001DB6            364              LEA     BCLRstring,A1   *Loads BCLRstring for printing
+00001494  103C 000D                365              MOVE.B  #13,D0          *Sets up trap
+00001498  4E4F                     366              TRAP    #15
+0000149A  6000 FC0A                367              BRA     endOP
+0000149E  6100 00CA                368  isBCS       BSR     outaddress      *prints current address
+000014A2  43F9 00001DBB            369              LEA     BCSstring,A1    *Loads BCSstring for printing
+000014A8  103C 000D                370              MOVE.B  #13,D0          *Sets up trap
+000014AC  4E4F                     371              TRAP    #15
+000014AE  6000 FBF6                372              BRA     endOP
+000014B2  6100 00B6                373  isBGE       BSR     outaddress      *prints current address
+000014B6  43F9 00001DBF            374              LEA     BGEstring,A1    *Loads BGEstring for printing
+000014BC  103C 000D                375              MOVE.B  #13,D0          *Sets up trap
+000014C0  4E4F                     376              TRAP    #15
+000014C2  6000 FBE2                377              BRA     endOP
+000014C6  6100 00A2                378  isBLT       BSR     outaddress      *prints current address
+000014CA  43F9 00001DC3            379              LEA     BLTstring,A1    *Loads BLTstring for printing
+000014D0  103C 000D                380              MOVE.B  #13,D0          *Sets up trap
+000014D4  4E4F                     381              TRAP    #15
+000014D6  6000 FBCE                382              BRA     endOP
+000014DA  6100 008E                383  isBVC       BSR     outaddress      *prints current address
+000014DE  43F9 00001DC7            384              LEA     BVCstring,A1    *Loads BVCstring for printing
+000014E4  103C 000D                385              MOVE.B  #13,D0          *Sets up trap
+000014E8  4E4F                     386              TRAP    #15
+000014EA  6000 FBBA                387              BRA     endOP
+000014EE  6100 007A                388  isBRA       BSR     outaddress      *prints current address
+000014F2  43F9 00001DCB            389              LEA     BRAstring,A1    *Loads BRAstring for printing
+000014F8  103C 000D                390              MOVE.B  #13,D0          *Sets up trap
+000014FC  4E4F                     391              TRAP    #15
+000014FE  6000 FBA6                392              BRA     endOP
+00001502  6100 0066                393  isJSR       BSR     outaddress      *prints current address
+00001506  43F9 00001DCF            394              LEA     JSRstring,A1    *Loads JSRstring for printing
+0000150C  103C 000D                395              MOVE.B  #13,D0          *Sets up trap
+00001510  4E4F                     396              TRAP    #15
+00001512  6000 FB92                397              BRA     endOP
+00001516  6100 0052                398  isRTS       BSR     outaddress      *prints current address
+0000151A  43F9 00001DD3            399              LEA     RTSstring,A1    *Loads RTSstring for printing
+00001520  103C 000D                400              MOVE.B  #13,D0          *Sets up trap
+00001524  4E4F                     401              TRAP    #15
+00001526  6000 FB7E                402              BRA     endOP
+0000152A                           403  isNEG       
+0000152A                           404  *BSR     outaddress      *prints current address
+0000152A                           405  *            LEA     NEGstring,A1    *Loads NEGstring for printing
+0000152A                           406  *            MOVE.B  #14,D0          *Sets up trap
+0000152A                           407  *            TRAP    #15
+0000152A  6100 01B6                408              BSR     EA_NEG
+0000152E  6000 FB76                409              BRA     endOP
+00001532                           410  
+00001532                           411  
+00001532                           412  *Masks to make comparisons easier
+00001532  3400                     413  compMask    MOVE.W  D0,D2           *Gets fresh copy of D0
+00001534  0242 F1C0                414              ANDI.W  #opMask,D2      *Masks D2 for rest of comparisons
+00001538  4E75                     415              RTS
+0000153A  3400                     416  mask15to8   MOVE.W  D0,D2               *Gets fresh copy of D0
+0000153C  0242 FF00                417              ANDI.W  #BitMask15to8,D2    *Masks D2 for the first byte
+00001540  4E75                     418              RTS
+00001542  3400                     419  mask15to12  MOVE.W  D0,D2               *Gets fresh copy of D0
+00001544  0242 F000                420              ANDI.W  #BitMask15to12,D2   *Masks first bit
+00001548  4E75                     421              RTS
+0000154A  3400                     422  mask15to7   MOVE.W  D0,D2               *Gets fresh copy of D0
+0000154C  0242 FF80                423              ANDI.W  #BitMask15to7,D2    *Masks D2
+00001550  4E75                     424              RTS
+00001552  3400                     425  mask15to6   MOVE.W  D0,D2               *Gets fresh copy of D0
+00001554  0242 FFC0                426              ANDI.W  #BitMask15to6,D2    *Masks D2
+00001558  4E75                     427              RTS
+0000155A  3400                     428  maskMulDivl MOVE.W  D0,D2               *Gets fresh copy of D0
+0000155C  0242 8BC0                429              ANDI.W  #BitMaskMulDivl,D2  *Masks D2
+00001560  4E75                     430              RTS
+00001562  3400                     431  maskShift   MOVE.W  D0,D2               *Gets a fresh copy of D0
+00001564  0242 F118                432              ANDI.W  #BitMaskShifts,D2   *Masks D2
+00001568  4E75                     433              RTS
+0000156A                           434              
+0000156A                           435  *prints address
+0000156A  3F02                     436  outaddress  MOVE.W  D2,-(sp)        *Saves D2
+0000156C  340D                     437              MOVE.W  A5,D2           *Moves current address to D2
+0000156E  6100 0030                438              BSR     n2ascii         *prints current address
+00001572  341F                     439              MOVE.W  (sp)+,D2        *Loads D2
+00001574  1239 00001D50            440              MOVE.B  space,D1        *Loads ascii space in D1
+0000157A  103C 0006                441              MOVE.B  #6,D0           *Sets up trap
+0000157E  4E4F                     442              TRAP    #15
+00001580  4E75                     443              RTS
+00001582                           444              
+00001582                           445  *prints word 'DATA '            
+00001582  43F9 00001D54            446  isData      LEA     datastring,A1   *Loads datastring for printing
+00001588  103C 000E                447              MOVE.B  #14,D0          *Sets up Trap
+0000158C  4E4F                     448              TRAP    #15
+0000158E                           449  *prints the data
+0000158E  6100 0010                450              BSR     n2ascii         *Prints out the data
+00001592  43F9 00001D51            451              LEA     newline,A1      *Sets up trap for new line
+00001598  103C 000E                452              MOVE.B  #14,D0
+0000159C  4E4F                     453              TRAP    #15
+0000159E  4E75                     454              RTS
+000015A0                           455  **************************************************
+000015A0                           456  *Takes the word hex in D2 and prints it to screen*
+000015A0                           457  **************************************************
+000015A0                           458  
+000015A0  183C 000C                459  n2ascii     MOVE.B  #12,D4          *Sets up D4 as counter.
+000015A4  3602                     460  n2ascii2    MOVE.W  D2,D3           *Moves to D3 to work on there 
+000015A6  E86B                     461              LSR.W   D4,D3           
+000015A8  0243 000F                462              ANDI.W  #$000F,D3       *Masks to check last nibble
+000015AC  B63C 0000                463              CMP.B   #$0,D3          *Chekcs if D3 is equal to 0
+000015B0  6700 0086                464              BEQ     print0
+000015B4  B63C 0001                465              CMP.B   #$1,D3          *Chekcs if D3 is equal to 1
+000015B8  6700 0088                466              BEQ     print1
+000015BC  B63C 0002                467              CMP.B   #$2,D3          *Chekcs if D3 is equal to 2
+000015C0  6700 008A                468              BEQ     print2
+000015C4  B63C 0003                469              CMP.B   #$3,D3          *Chekcs if D3 is equal to 3
+000015C8  6700 008C                470              BEQ     print3
+000015CC  B63C 0004                471              CMP.B   #$4,D3          *Chekcs if D3 is equal to 4
+000015D0  6700 008E                472              BEQ     print4
+000015D4  B63C 0005                473              CMP.B   #$5,D3          *Chekcs if D3 is equal to 5
+000015D8  6700 0090                474              BEQ     print5
+000015DC  B63C 0006                475              CMP.B   #$6,D3          *Chekcs if D3 is equal to 6
+000015E0  6700 0092                476              BEQ     print6
+000015E4  B63C 0007                477              CMP.B   #$7,D3          *Chekcs if D3 is equal to 7
+000015E8  6700 0094                478              BEQ     print7
+000015EC  B63C 0008                479              CMP.B   #$8,D3          *Chekcs if D3 is equal to 8
+000015F0  6700 0096                480              BEQ     print8
+000015F4  B63C 0009                481              CMP.B   #$9,D3          *Chekcs if D3 is equal to 9
+000015F8  6700 0098                482              BEQ     print9
+000015FC  B63C 000A                483              CMP.B   #$A,D3          *Chekcs if D3 is equal to A
+00001600  6700 009A                484              BEQ     printA
+00001604  B63C 000B                485              CMP.B   #$B,D3          *Chekcs if D3 is equal to B
+00001608  6700 009C                486              BEQ     printB
+0000160C  B63C 000C                487              CMP.B   #$C,D3          *Chekcs if D3 is equal to C
+00001610  6700 009E                488              BEQ     printC
+00001614  B63C 000D                489              CMP.B   #$D,D3          *Chekcs if D3 is equal to D
+00001618  6700 00A0                490              BEQ     printD
+0000161C  B63C 000E                491              CMP.B   #$E,D3          *Chekcs if D3 is equal to E
+00001620  6700 00A2                492              BEQ     printE
+00001624  B63C 000F                493              CMP.B   #$F,D3          *Checks if D3 is equal to F
+00001628  6700 00A4                494              BEQ     printF
+0000162C  5904                     495  n2acheck    SUB.B   #4,D4           *Decrements our counter
+0000162E  B83C 0000                496              CMP.B   #0,D4           *Checks if counter reached 0
+00001632  6C00 FF70                497              BGE     n2ascii2        *Returns to top of loop to continue        
+00001636  4E75                     498              RTS                     *Else return to caller
+00001638                           499  
+00001638  4281                     500  print0      CLR.L   D1              *Clears D1
+0000163A  123C 0030                501              MOVE.B  #$30,D1         *Sets D1 as ascii 0
+0000163E  6000 0098                502              BRA     printchar       *prints the character
+00001642  4281                     503  print1      CLR.L   D1              *Clears D1
+00001644  123C 0031                504              MOVE.B  #$31,D1         *Sets D1 as ascii 1
+00001648  6000 008E                505              BRA     printchar       *prints the character
+0000164C  4281                     506  print2      CLR.L   D1              *Clears D1
+0000164E  123C 0032                507              MOVE.B  #$32,D1         *Sets D1 as ascii 2
+00001652  6000 0084                508              BRA     printchar       *prints the character
+00001656  4281                     509  print3      CLR.L   D1              *Clears D1
+00001658  123C 0033                510              MOVE.B  #$33,D1         *Sets D1 as ascii 3
+0000165C  6000 007A                511              BRA     printchar       *prints the character
+00001660  4281                     512  print4      CLR.L   D1              *Clears D1
+00001662  123C 0034                513              MOVE.B  #$34,D1         *Sets D1 as ascii 4
+00001666  6000 0070                514              BRA     printchar       *prints the character
+0000166A  4281                     515  print5      CLR.L   D1              *Clears D1
+0000166C  123C 0035                516              MOVE.B  #$35,D1         *Sets D1 as ascii 5
+00001670  6000 0066                517              BRA     printchar       *prints the character
+00001674  4281                     518  print6      CLR.L   D1              *Clears D1
+00001676  123C 0036                519              MOVE.B  #$36,D1         *Sets D1 as ascii 6
+0000167A  6000 005C                520              BRA     printchar       *prints the character
+0000167E  4281                     521  print7      CLR.L   D1              *Clears D1
+00001680  123C 0037                522              MOVE.B  #$37,D1         *Sets D1 as ascii 7
+00001684  6000 0052                523              BRA     printchar       *prints the character
+00001688  4281                     524  print8      CLR.L   D1              *Clears D1
+0000168A  123C 0038                525              MOVE.B  #$38,D1         *Sets D1 as ascii 8
+0000168E  6000 0048                526              BRA     printchar       *prints the character
+00001692  4281                     527  print9      CLR.L   D1              *Clears D1
+00001694  123C 0039                528              MOVE.B  #$39,D1         *Sets D1 as ascii 9
+00001698  6000 003E                529              BRA     printchar       *prints the character
+0000169C  4281                     530  printA      CLR.L   D1              *Clears D1
+0000169E  123C 0041                531              MOVE.B  #$41,D1         *Sets D1 as ascii A
+000016A2  6000 0034                532              BRA     printchar       *prints the character
+000016A6  4281                     533  printB      CLR.L   D1              *Clears D1
+000016A8  123C 0042                534              MOVE.B  #$42,D1         *Sets D1 as ascii B
+000016AC  6000 002A                535              BRA     printchar       *prints the character
+000016B0  4281                     536  printC      CLR.L   D1              *Clears D1
+000016B2  123C 0043                537              MOVE.B  #$43,D1         *Sets D1 as ascii C
+000016B6  6000 0020                538              BRA     printchar       *prints the character
+000016BA  4281                     539  printD      CLR.L   D1              *Clears D1
+000016BC  123C 0044                540              MOVE.B  #$44,D1         *Sets D1 as ascii D
+000016C0  6000 0016                541              BRA     printchar       *prints the character
+000016C4  4281                     542  printE      CLR.L   D1              *Clears D1
+000016C6  123C 0045                543              MOVE.B  #$45,D1         *Sets D1 as ascii E
+000016CA  6000 000C                544              BRA     printchar       *prints the character         
+000016CE  4281                     545  printF      CLR.L   D1              *Clears D1
+000016D0  123C 0046                546              MOVE.B  #$46,D1         *Sets D1 as ascii F
+000016D4  6000 0002                547              BRA     printchar       *prints the character
+000016D8  103C 0006                548  printchar   MOVE.B  #6,D0           *Sets up Trap
+000016DC  4E4F                     549              TRAP    #15
+000016DE  6000 FF4C                550              BRA     n2acheck        *returns to n2ascii
+000016E2                           551  
+000016E2                           552  *--------------------------------*
+000016E2                           553  *     Written By: Zeke Snider    *
+000016E2                           554  *     CSS 422                    *
+000016E2                           555  *     Fall 2014                  *
+000016E2                           556  *     EA Section                 *
+000016E2                           557  *--------------------------------*
+000016E2                           558  
+000016E2                           559  
+000016E2                           560  *D0 is assumed to be input line
+000016E2                           561  *Assuming D2 is Addressing Mode
+000016E2                           562  *Assuming D3 is Register
+000016E2                           563  *D7 is used to store return values
+000016E2                           564  
+000016E2                           565  *Input: D0 (Input Line)
+000016E2                           566  EA_NEG                              ;Parsing EA for NEG function
+000016E2                           567  
+000016E2  6100 072E                568        BSR         BitMask3to5       ;isolating destination address mode
+000016E6  2407                     569        MOVE.L      D7,D2             ;moving return value to D2
+000016E8                           570  
+000016E8  6100 0734                571        BSR         BitMask0to2       ;isloating destination address register
+000016EC  2607                     572        MOVE.L      D7,D3             ;Moving return value to D3
+000016EE                           573  
+000016EE  B4BC 00000001            574        CMP.L       #%001,D2           ;Address register direct is not a valid input for NEG
+000016F4  6700 0656                575        BEQ         ERROR
+000016F8                           576  
+000016F8  B4BC 00000007            577        CMP.L       #%111,D2           ;immediate data is not a valid input for NEG
+000016FE  B6BC 00000004            578        CMP.L       #%100,D3
+00001704  6700 0646                579        BEQ         ERROR
+00001708                           580  
+00001708  6100 0416                581        BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
+0000170C                           582  
+0000170C  10FC 0000                583        MOVE.B      #00,(A0)+          ;Terminating character
+00001710                           584  
+00001710  4E75                     585        RTS                           ;Returning to source
+00001712                           586  
+00001712                           587  
+00001712                           588  *D0 is assumed to be input line
+00001712                           589  *D1 is assumed to be input for opmode type
+00001712                           590  *D7 is used to store the return value from the BitMasks
+00001712                           591  *Assuming D2 is EA Addressing Mode
+00001712                           592  *Assuming D3 is EA Register
+00001712                           593  *D5 stores register
+00001712                           594  
+00001712                           595  *Input: D0 (input Line)
+00001712                           596  *Input: D1 (OPMOde type (1 or 2))
+00001712                           597  EA_OR                              ;Parsing EA for OR function
+00001712                           598  
+00001712  6100 06E6                599        BSR         BitMask6to8       ;isolating register number
+00001716  2A07                     600        MOVE.L      D7,D5             ;moving return value to D5
+00001718                           601  
+00001718  6100 06F8                602        BSR         BitMask3to5       ;isolating destination address mode
+0000171C  2407                     603        MOVE.L      D7,D2             ;moving return value to D2
+0000171E                           604  
+0000171E  6100 06FE                605        BSR         BitMask0to2       ;isloating destination address register
+00001722  2607                     606        MOVE.L      D7,D3             ;Moving return value to D3
+00001724                           607  
+00001724  B23C 0001                608        CMP.B       #1,D1             ;if the OPMode is type 1, the EA is the source
+00001728  6700 0010                609        BEQ         EA_OR_SOURCE      
+0000172C                           610  
+0000172C  B23C 0002                611        CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
+00001730  6700 0008                612        BEQ         EA_OR_SOURCE
+00001734                           613  
+00001734  10FC 0000                614        MOVE.B      #0,(A0)+          ;Terminating character
+00001738                           615  
+00001738  4E75                     616        RTS                           ;Returning to source
+0000173A                           617  
+0000173A                           618  *Called if the EA address field is a source operand
+0000173A                           619  EA_OR_SOURCE
+0000173A  B4B8 0001                620        CMP.L       %001,D2           ;Address register direct is not a valid input for EA Source
+0000173E  6700 060C                621        BEQ         ERROR
+00001742                           622  
+00001742  6100 03DC                623        BSR         EA_PARSE_MODE     ;outputing the source EA
+00001746                           624  
+00001746  10FC 002C                625        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+0000174A  10FC 0020                626        MOVE.B      #' ',(A0)+
+0000174E                           627  
+0000174E  2605                     628        MOVE.L      D5,D3             ;Moving register number to D3
+00001750  6100 041A                629        BSR         EA_PARSE_Dn       ;Outputting register
+00001754                           630  
+00001754  4E75                     631        RTS
+00001756                           632  
+00001756                           633  *Called if the EA address field is a destinaton operand
+00001756                           634  EA_OR_DESTINATION
+00001756  B4B8 0000                635        CMP.L       %000,D2           ;Data register direct is not a valid input for EA Source
+0000175A  6700 05F0                636        BEQ         ERROR
+0000175E                           637  
+0000175E  B4B8 0001                638        CMP.L       %001,D2           ;Address register direct is not a valid input for EA Source
+00001762  6700 05E8                639        BEQ         ERROR
+00001766                           640  
+00001766  2C03                     641        MOVE.L      D3,D6             ;backing up EA register to D6
+00001768  2605                     642        MOVE.L      D5,D3             ;Moving register number to D3
+0000176A  6100 0400                643        BSR         EA_PARSE_Dn       ;Outputting register
+0000176E                           644  
+0000176E  10FC 002C                645        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001772  10FC 0020                646        MOVE.B      #' ',(A0)+
+00001776                           647  
+00001776  2606                     648        MOVE.L      D6,D3             ;Moving EA register back
+00001778  6100 03A6                649        BSR         EA_PARSE_MODE     ;outputing the destination EA
+0000177C                           650  
+0000177C                           651  
+0000177C  4E75                     652        RTS
+0000177E                           653  
+0000177E                           654  
+0000177E                           655  *Input: D0 (Input Line)
+0000177E                           656  *Input: D1 (immediate data source)
+0000177E                           657  EA_ORI                              ;Parsing EA for ORI function
+0000177E                           658  
+0000177E  6100 0448                659        BSR         EA_PARSE_IMMEDIATE_DATA  ;displays immediate data
+00001782                           660  
+00001782  10FC 002C                661        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001786  10FC 0020                662        MOVE.B      #' ',(A0)+
+0000178A                           663  
+0000178A  6100 0686                664        BSR         BitMask3to5       ;isolating destination address mode
+0000178E  2407                     665        MOVE.L      D7,D2             ;moving return value to D2
+00001790                           666  
+00001790  6100 068C                667        BSR         BitMask0to2       ;isloating destination address register
+00001794  2607                     668        MOVE.L      D7,D3             ;Moving return value to D3
+00001796                           669  
+00001796  6100 0430                670        BSR         EA_PARSE_IMMEDIATE_DATA  ;parsing immediate data
+0000179A                           671  
+0000179A  10FC 002C                672        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+0000179E  10FC 0020                673        MOVE.B      #' ',(A0)+
+000017A2                           674  
+000017A2  B4B8 0001                675        CMP.L       %001,D2           ;Address register direct is not a valid input for ORI
+000017A6  6700 05A4                676        BEQ         ERROR
+000017AA                           677  
+000017AA  B4B8 0007                678        CMP.L       %111,D2           ;immediate data is not a valid input for ORI
+000017AE  B6B8 0004                679        CMP.L       %100,D3
+000017B2  6700 0598                680        BEQ         ERROR
+000017B6                           681  
+000017B6  6100 0368                682        BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
+000017BA                           683  
+000017BA  10FC 0000                684        MOVE.B      #0,(A0)+          ;Terminating character
+000017BE                           685  
+000017BE  4E75                     686        RTS                           ;Returning to source
+000017C0                           687  
+000017C0                           688  
+000017C0                           689  *Input: D0 (input Line)
+000017C0                           690  *Input: D1 (OPMOde type (1 or 2))
+000017C0                           691  EA_AND                              ;Parsing EA for AND function
+000017C0                           692  
+000017C0  6100 062A                693        BSR         BitMask9to11      ;isolating register number
+000017C4  2A07                     694        MOVE.L      D7,D5             ;moving return value to D5
+000017C6                           695  
+000017C6  6100 064A                696        BSR         BitMask3to5       ;isolating destination address mode
+000017CA  2407                     697        MOVE.L      D7,D2             ;moving return value to D2
+000017CC                           698  
+000017CC  6100 0650                699        BSR         BitMask0to2       ;isloating destination address register
+000017D0  2607                     700        MOVE.L      D7,D3             ;Moving return value to D3
+000017D2                           701  
+000017D2  B23C 0001                702        CMP.B       #1,D1             ;if the OPMode is type 1, the EA is the source
+000017D6  6700 0010                703        BEQ         EA_AND_SOURCE      
+000017DA                           704  
+000017DA  B23C 0002                705        CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
+000017DE  6700 0008                706        BEQ         EA_AND_SOURCE
+000017E2                           707  
+000017E2  10FC 0000                708        MOVE.B      #0,(A0)+          ;Terminating character
+000017E6                           709  
+000017E6  4E75                     710        RTS                           ;Returning to source
+000017E8                           711  
+000017E8                           712  *Called if the EA address field is a source operand
+000017E8                           713  EA_AND_SOURCE
+000017E8                           714  
+000017E8  B4B8 0001                715        CMP.L       %001,D2           ;Address register direct is not a valid input for EA source
+000017EC  6700 055E                716        BEQ         ERROR
+000017F0                           717  
+000017F0  6100 032E                718        BSR         EA_PARSE_MODE     ;outputing the source EA
+000017F4                           719  
+000017F4  10FC 002C                720        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+000017F8  10FC 0020                721        MOVE.B      #' ',(A0)+
+000017FC                           722  
+000017FC  2E05                     723        MOVE.L      D5,D7             ;Moving register number to D7
+000017FE  6100 036C                724        BSR         EA_PARSE_Dn       ;Outputting register
+00001802                           725  
+00001802  4E75                     726        RTS
+00001804                           727  
+00001804                           728  *Called if the EA address field is a destinaton operand
+00001804                           729  EA_AND_DESTINATION
+00001804  B4B8 0000                730        CMP.L       %000,D2           ;Data register direct is not a valid input for EA destinaton
+00001808  6700 0542                731        BEQ         ERROR
+0000180C                           732  
+0000180C  B4B8 0001                733        CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
+00001810  6700 053A                734        BEQ         ERROR
+00001814                           735  
+00001814  2C03                     736        MOVE.L      D3,D6             ;backing up EA register to D6
+00001816  2E05                     737        MOVE.L      D5,D7             ;Moving register number to D3
+00001818  6100 0352                738        BSR         EA_PARSE_Dn       ;Outputting register
+0000181C                           739  
+0000181C  10FC 002C                740        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001820  10FC 0020                741        MOVE.B      #' ',(A0)+
+00001824                           742  
+00001824  2E06                     743        MOVE.L      D6,D7             ;Moving EA register back
+00001826  6100 02F8                744        BSR         EA_PARSE_MODE     ;outputing the destination EA
+0000182A                           745  
+0000182A                           746  
+0000182A  4E75                     747        RTS
+0000182C                           748  
+0000182C                           749  EA_ANDI                             ;Parsing EA for ANDI function
+0000182C                           750  
+0000182C  6100 05E4                751        BSR         BitMask3to5       ;isolating destination address mode
+00001830  2407                     752        MOVE.L      D7,D2             ;moving return value to D2
+00001832                           753  
+00001832  6100 05EA                754        BSR         BitMask0to2       ;isloating destination address register
+00001836  2607                     755        MOVE.L      D7,D3             ;Moving return value to D3
+00001838                           756  
+00001838  6100 038E                757        BSR         EA_PARSE_IMMEDIATE_DATA          
+0000183C                           758  
+0000183C  10FC 002C                759        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001840  10FC 0020                760        MOVE.B      #' ',(A0)+
+00001844                           761  
+00001844  B4B8 0001                762        CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
+00001848  6700 0502                763        BEQ         ERROR
+0000184C                           764  
+0000184C  2E05                     765        MOVE.L      D5,D7
+0000184E  6100 02D0                766        BSR         EA_PARSE_MODE       ;outputting Address register destination
+00001852                           767  
+00001852  4E75                     768        RTS                           ;Returning to source
+00001854                           769  
+00001854                           770  *Input: D0 (input Line)
+00001854                           771  *Input: D1 (OPMOde type (1 or 2))
+00001854                           772  *Input: D2 (Isbyte (0 or 1))
+00001854                           773  EA_SUB                              ;Parsing EA for AND function
+00001854  2802                     774        MOVE.L      D2,D4             ;moving isbyte variable to D4
+00001856                           775  
+00001856  6100 0594                776        BSR         BitMask9to11      ;isolating register number
+0000185A  2A07                     777        MOVE.L      D7,D5             ;moving return value to D5
+0000185C                           778  
+0000185C  6100 05B4                779        BSR         BitMask3to5       ;isolating destination address mode
+00001860  2407                     780        MOVE.L      D7,D2             ;moving return value to D2
+00001862                           781  
+00001862  6100 05BA                782        BSR         BitMask0to2       ;isloating destination address register
+00001866  2607                     783        MOVE.L      D7,D3             ;Moving return value to D3
+00001868                           784  
+00001868  B23C 0001                785        CMP.B       #1,D1             ;if the OPMode is type 1, the EA is the source
+0000186C  6700 FF7A                786        BEQ         EA_AND_SOURCE      
+00001870                           787  
+00001870  B23C 0002                788        CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
+00001874  6700 FF72                789        BEQ         EA_AND_SOURCE
+00001878                           790  
+00001878  10FC 0000                791        MOVE.B      #0,(A0)+          ;Terminating character
+0000187C                           792  
+0000187C  4E75                     793        RTS                           ;Returning to source
+0000187E                           794  
+0000187E                           795  *Called if the EA address field is a source operand
+0000187E                           796  EA_SUB_SOURCE
+0000187E                           797  
+0000187E  B4B8 0000                798        CMP.L       %000,D2           ;Address register direct is not a valid input for EA source
+00001882  B8BC 00000001            799        CMP.L       #1,D4             ;if it is a byte-sized operation
+00001888  6700 04C2                800        BEQ         ERROR
+0000188C                           801  
+0000188C  6100 0292                802        BSR         EA_PARSE_MODE     ;outputing the source EA
+00001890                           803  
+00001890  10FC 002C                804        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001894  10FC 0020                805        MOVE.B      #' ',(A0)+
+00001898                           806  
+00001898  2E05                     807        MOVE.L      D5,D7             ;Moving register number to D7
+0000189A  6100 02D0                808        BSR         EA_PARSE_Dn       ;Outputting register
+0000189E                           809  
+0000189E  4E75                     810        RTS
+000018A0                           811  
+000018A0                           812  *Called if the EA address field is a destinaton operand
+000018A0                           813  EA_SUB_DESTINATION
+000018A0  B4B8 0000                814        CMP.L       %000,D2           ;Data register direct is not a valid input for EA destinaton
+000018A4  6700 04A6                815        BEQ         ERROR
+000018A8                           816  
+000018A8  B4B8 0001                817        CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
+000018AC  6700 049E                818        BEQ         ERROR
+000018B0                           819  
+000018B0  2C03                     820        MOVE.L      D3,D6             ;backing up EA register to D6
+000018B2  2E05                     821        MOVE.L      D5,D7             ;Moving register number to D3
+000018B4  6100 02B6                822        BSR         EA_PARSE_Dn       ;Outputting register
+000018B8                           823  
+000018B8  10FC 002C                824        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+000018BC  10FC 0020                825        MOVE.B      #' ',(A0)+
+000018C0                           826  
+000018C0  2E06                     827        MOVE.L      D6,D7             ;Moving EA register back
+000018C2  6100 025C                828        BSR         EA_PARSE_MODE     ;outputing the destination EA
+000018C6                           829  
+000018C6                           830  
+000018C6  4E75                     831        RTS
+000018C8                           832  
+000018C8                           833  *Input: D0 (input Line)
+000018C8                           834  *Input: D1 (Isbyte (0 or 1))
+000018C8                           835  EA_SUBQ                             ;Parsing EA for SUBQ function
+000018C8                           836  
+000018C8  6100 0548                837        BSR         BitMask3to5       ;isolating destination address mode
+000018CC  2407                     838        MOVE.L      D7,D2             ;moving return value to D2
+000018CE                           839  
+000018CE  6100 054E                840        BSR         BitMask0to2       ;isloating destination address register
+000018D2  2607                     841        MOVE.L      D7,D3             ;Moving return value to D3
+000018D4                           842  
+000018D4  6100 02F2                843        BSR         EA_PARSE_IMMEDIATE_DATA          
+000018D8                           844  
+000018D8  10FC 002C                845        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+000018DC  10FC 0020                846        MOVE.B      #' ',(A0)+
+000018E0                           847  
+000018E0  B2BC 00000001            848        CMP.L       #1,D1             ;Address register direct is not a valid input for EA destinaton
+000018E6  B4B8 0001                849        CMP.L       %001,D2           ;if it is a byte-operation
+000018EA  6000 0460                850        BRA         ERROR
+000018EE                           851        
+000018EE  2E05                     852        MOVE.L      D5,D7
+000018F0  6100 022E                853        BSR         EA_PARSE_MODE       ;outputting Address register destination
+000018F4                           854  
+000018F4  4E75                     855        RTS                           ;Returning to source
+000018F6                           856  
+000018F6                           857  
+000018F6                           858  *Input: D0 (input Line)
+000018F6                           859  EA_MOVE                             ;Parsing EA for MOVE function
+000018F6                           860  
+000018F6  6100 051A                861        BSR         BitMask3to5       ;isolating source address mode
+000018FA  2407                     862        MOVE.L      D7,D2             ;moving return value to D2
+000018FC                           863  
+000018FC  6100 0520                864        BSR         BitMask0to2       ;isloating source address register
+00001900  2607                     865        MOVE.L      D7,D3             ;Moving return value to D3
+00001902                           866  
+00001902  6100 021C                867        BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+00001906                           868  
+00001906  10FC 002C                869        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+0000190A  10FC 0020                870        MOVE.B      #' ',(A0)+
+0000190E                           871  
+0000190E  6100 04EA                872        BSR         BitMask6to8       ;isolating destination address mode
+00001912  2407                     873        MOVE.L      D7,D2             ;moving return value to D2
+00001914                           874  
+00001914  6100 04D6                875        BSR         BitMask9to11       ;isloating destination address register
+00001918  2607                     876        MOVE.L      D7,D3             ;Moving return value to D3
+0000191A                           877  
+0000191A  B478 0001                878        CMP.W       %001,D2           ;Address register direct is not a valid destination mode
+0000191E  6700 042C                879        BEQ         ERROR
+00001922                           880  
+00001922  6100 01FC                881        BSR         EA_PARSE_MODE     ;parsing mode and register for the destination     
+00001926                           882  
+00001926  4E75                     883        RTS                           ;Returning to source
+00001928                           884  
+00001928                           885  *Input: D0 (input Line)
+00001928                           886  EA_MOVEA                            ;Parsing EA for MOVEA function
+00001928                           887  
+00001928  6100 04E8                888        BSR         BitMask3to5       ;isolating source address mode
+0000192C  2407                     889        MOVE.L      D7,D2             ;moving return value to D2
+0000192E                           890  
+0000192E  6100 04EE                891        BSR         BitMask0to2       ;isloating source address register
+00001932  2607                     892        MOVE.L      D7,D3             ;Moving return value to D3
+00001934                           893  
+00001934  6100 01EA                894        BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+00001938                           895  
+00001938  10FC 002C                896        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+0000193C  10FC 0020                897        MOVE.B      #' ',(A0)+
+00001940                           898  
+00001940  6100 04AA                899        BSR         BitMask9to11      ;isloating destination address register
+00001944                           900  
+00001944  2607                     901        MOVE.L      D7,D3             ;Moving return value to D3
+00001946  6100 0230                902        BSR         EA_PARSE_An       ;parsing address register direct for the destination     
+0000194A                           903  
+0000194A  4E75                     904        RTS                           ;Returning to source
+0000194C                           905  
+0000194C                           906  *Input: D0 (input Line)
+0000194C                           907  EA_CMP                             ;Parsing EA for CMP function
+0000194C                           908  
+0000194C  6100 04C4                909        BSR         BitMask3to5       ;isolating source address mode
+00001950  2407                     910        MOVE.L      D7,D2             ;moving return value to D2
+00001952                           911  
+00001952  6100 04CA                912        BSR         BitMask0to2       ;isloating source address register
+00001956  2607                     913        MOVE.L      D7,D3             ;Moving return value to D3
+00001958                           914  
+00001958  6100 01C6                915        BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+0000195C                           916  
+0000195C  10FC 002C                917        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001960  10FC 0020                918        MOVE.B      #' ',(A0)+
+00001964                           919  
+00001964  6100 0486                920        BSR         BitMask9to11      ;isloating destination address register
+00001968                           921  
+00001968  2607                     922        MOVE.L      D7,D3             ;Moving return value to D3
+0000196A  6100 0200                923        BSR         EA_PARSE_Dn       ;parsing data register direct for the destination     
+0000196E                           924  
+0000196E  4E75                     925        RTS                           ;Returning to source
+00001970                           926  
+00001970                           927  
+00001970                           928  EA_CMPI                             ;Parsing EA for CMPI function
+00001970                           929  
+00001970  6100 04A0                930        BSR         BitMask3to5       ;isolating destination address mode
+00001974  2407                     931        MOVE.L      D7,D2             ;moving return value to D2
+00001976                           932  
+00001976  6100 04A6                933        BSR         BitMask0to2       ;isloating destination address register
+0000197A  2607                     934        MOVE.L      D7,D3             ;Moving return value to D3
+0000197C                           935  
+0000197C  6100 024A                936        BSR         EA_PARSE_IMMEDIATE_DATA          
+00001980                           937  
+00001980  10FC 002C                938        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001984  10FC 0020                939        MOVE.B      #' ',(A0)+
+00001988                           940  
+00001988  B4B8 0001                941        CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
+0000198C  6700 03BE                942        BEQ         ERROR
+00001990                           943  
+00001990  6100 018E                944        BSR         EA_PARSE_MODE     ;outputting Address register destination
+00001994                           945  
+00001994  4E75                     946        RTS                           ;Returning to source
+00001996                           947  
+00001996                           948  
+00001996                           949  *Input: D0 (input Line)
+00001996                           950  EA_MULS                             ;Parsing EA for MULS function
+00001996                           951  
+00001996  6100 047A                952        BSR         BitMask3to5       ;isolating source address mode
+0000199A  2407                     953        MOVE.L      D7,D2             ;moving return value to D2
+0000199C                           954  
+0000199C  6100 0480                955        BSR         BitMask0to2       ;isloating source address register
+000019A0  2607                     956        MOVE.L      D7,D3             ;Moving return value to D3
+000019A2                           957  
+000019A2  B478 0001                958        CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode for DIVS
+000019A6  6700 03A4                959        BEQ         ERROR
+000019AA                           960  
+000019AA  6100 0174                961        BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+000019AE                           962  
+000019AE  10FC 002C                963        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+000019B2  10FC 0020                964        MOVE.B      #' ',(A0)+
+000019B6                           965  
+000019B6  6100 0434                966        BSR         BitMask9to11      ;isloating destination address register
+000019BA                           967  
+000019BA  2607                     968        MOVE.L      D7,D3             ;Moving return value to D3
+000019BC  6100 01AE                969        BSR         EA_PARSE_Dn       ;parsing data register direct for the destination     
+000019C0                           970  
+000019C0  4E75                     971        RTS                           ;Returning to source
+000019C2                           972  
+000019C2                           973  *Input: D0 (input Line)
+000019C2                           974  EA_DIVS                             ;Parsing EA for DIVS function
+000019C2                           975  
+000019C2  6100 044E                976        BSR         BitMask3to5       ;isolating source address mode
+000019C6  2407                     977        MOVE.L      D7,D2             ;moving return value to D2
+000019C8                           978  
+000019C8  6100 0454                979        BSR         BitMask0to2       ;isloating source address register
+000019CC  2607                     980        MOVE.L      D7,D3             ;Moving return value to D3
+000019CE                           981  
+000019CE  B478 0001                982        CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode for DIVS
+000019D2  6700 0378                983        BEQ         ERROR
+000019D6                           984  
+000019D6  6100 0148                985        BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+000019DA                           986  
+000019DA  10FC 002C                987        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+000019DE  10FC 0020                988        MOVE.B      #' ',(A0)+
+000019E2                           989  
+000019E2  6100 0408                990        BSR         BitMask9to11      ;isloating destination address register
+000019E6                           991  
+000019E6  2607                     992        MOVE.L      D7,D3             ;Moving return value to D3
+000019E8  6100 0182                993        BSR         EA_PARSE_Dn       ;parsing data register direct for the destination     
+000019EC                           994  
+000019EC  4E75                     995        RTS                           ;Returning to source
+000019EE                           996  
+000019EE                           997  *Input: D0 (input Line)
+000019EE                           998  EA_LS_REGISTER                      ;Parsing EA for LSR/LSL function for register shifts
+000019EE                           999  
+000019EE  6100 047E               1000        BSR         BitMask5to5
+000019F2  2A07                    1001        MOVE.L      D7,D5             ;storing i/r value in D5
+000019F4                          1002  
+000019F4  6100 03F6               1003        BSR         BitMask9to11      ;isloating source EA source register
+000019F8  2607                    1004        MOVE.L      D7,D3             ;Moving return value to D3
+000019FA                          1005  
+000019FA  6100 02FE               1006        BSR         EA_PARSE_REGISTER ;parsing the count/register field
+000019FE  2A07                    1007        MOVE.L      D7,D5             ;moving result to D5
+00001A00                          1008  
+00001A00  BA78 0001               1009        CMP.W       %1,D5             ;if the i/r value is 1 display the data register
+00001A04  10FC 0044               1010        MOVE.B      #'D',(A0)+
+00001A08                          1011  
+00001A08  BA78 0000               1012        CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
+00001A0C  10FC 0023               1013        MOVE.B      #'#',(A0)+
+00001A10                          1014  
+00001A10  10C5                    1015        MOVE.B      D5,(A0)+          ;pushing the register number or immediate data to the stack
+00001A12                          1016  
+00001A12  10FC 002C               1017        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001A16  10FC 0020               1018        MOVE.B      #' ',(A0)+
+00001A1A                          1019   
+00001A1A  6100 0402               1020        BSR         BitMask0to2       ;isloating source destination register
+00001A1E  2607                    1021        MOVE.L      D7,D3             ;Moving return value to D3
+00001A20                          1022  
+00001A20  6100 014A               1023        BSR         EA_PARSE_Dn       ;displaying the destination data register
+00001A24                          1024  
+00001A24  4E75                    1025        RTS                           ;Returning to source
+00001A26                          1026  
+00001A26                          1027  *Input: D0 (input Line)
+00001A26                          1028  EA_LS_MEMORY                        ;Parsing EA for LSR/LSL function for memory shifts
+00001A26                          1029  
+00001A26  6100 03EA               1030        BSR         BitMask3to5       ;isolating destination address mode
+00001A2A  2407                    1031        MOVE.L      D7,D2             ;moving return value to D2
+00001A2C                          1032  
+00001A2C  6100 03F0               1033        BSR         BitMask0to2       ;isloating source address register
+00001A30  2607                    1034        MOVE.L      D7,D3             ;Moving return value to D3
+00001A32                          1035  
+00001A32  B478 0000               1036        CMP.W       %000,D2           ;Data Register direct is not a valid EA mode
+00001A36  6700 0314               1037        BEQ         ERROR
+00001A3A                          1038  
+00001A3A  B478 0001               1039        CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode
+00001A3E  6700 030C               1040        BEQ         ERROR
+00001A42                          1041  
+00001A42  B478 0007               1042        CMP.W       %111,D2           ;Immediate Data
+00001A46  B678 0002               1043        CMP.W       %010,D3
+00001A4A  6700 0300               1044        BEQ         ERROR
+00001A4E                          1045  
+00001A4E  6100 00D0               1046        BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+00001A52                          1047  
+00001A52  4E75                    1048        RTS                           ;Returning to source
+00001A54                          1049  
+00001A54                          1050  *Input: D0 (input Line)
+00001A54                          1051  EA_AS_REGISTER                      ;Parsing EA for ASR/ASL function for register shifts
+00001A54                          1052  
+00001A54  6100 0418               1053        BSR         BitMask5to5
+00001A58  2A07                    1054        MOVE.L      D7,D5             ;storing i/r value in D5
+00001A5A                          1055  
+00001A5A  6100 0390               1056        BSR         BitMask9to11      ;isloating source EA source register
+00001A5E  2607                    1057        MOVE.L      D7,D3             ;Moving return value to D3
+00001A60                          1058  
+00001A60  6100 0298               1059        BSR         EA_PARSE_REGISTER ;parsing the count/register field
+00001A64  2A07                    1060        MOVE.L      D7,D5             ;moving result to D5
+00001A66                          1061  
+00001A66  BA78 0001               1062        CMP.W       %1,D5             ;if the i/r value is 1 display the data register
+00001A6A  10FC 0044               1063        MOVE.B      #'D',(A0)+
+00001A6E                          1064  
+00001A6E  BA78 0000               1065        CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
+00001A72  10FC 0023               1066        MOVE.B      #'#',(A0)+
+00001A76                          1067  
+00001A76  10C5                    1068        MOVE.B      D5,(A0)+          ;pushing the register number or immediate data to the stack
+00001A78                          1069  
+00001A78  10FC 002C               1070        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001A7C  10FC 0020               1071        MOVE.B      #' ',(A0)+
+00001A80                          1072   
+00001A80  6100 039C               1073        BSR         BitMask0to2       ;isloating source destination register
+00001A84  2607                    1074        MOVE.L      D7,D3             ;Moving return value to D3
+00001A86                          1075  
+00001A86  6100 00E4               1076        BSR         EA_PARSE_Dn       ;displaying the destination data register
+00001A8A                          1077  
+00001A8A  4E75                    1078        RTS                           ;Returning to source
+00001A8C                          1079  
+00001A8C                          1080  *Input: D0 (input Line)
+00001A8C                          1081  EA_AS_MEMORY                        ;Parsing EA for ASR/ASL function for memory shifts
+00001A8C                          1082  
+00001A8C  6100 0384               1083        BSR         BitMask3to5       ;isolating destination address mode
+00001A90  2407                    1084        MOVE.L      D7,D2             ;moving return value to D2
+00001A92                          1085  
+00001A92  6100 038A               1086        BSR         BitMask0to2       ;isloating source address register
+00001A96  2607                    1087        MOVE.L      D7,D3             ;Moving return value to D3
+00001A98                          1088  
+00001A98  B478 0000               1089        CMP.W       %000,D2           ;Data Register direct is not a valid EA mode
+00001A9C  6700 02AE               1090        BEQ         ERROR
+00001AA0                          1091  
+00001AA0  B478 0001               1092        CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode
+00001AA4  6700 02A6               1093        BEQ         ERROR
+00001AA8                          1094  
+00001AA8  B478 0007               1095        CMP.W       %111,D2           ;Immediate Data
+00001AAC  B678 0002               1096        CMP.W       %010,D3
+00001AB0  6700 029A               1097        BEQ         ERROR
+00001AB4                          1098  
+00001AB4  6100 006A               1099        BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+00001AB8                          1100  
+00001AB8  4E75                    1101        RTS                           ;Returning to source
+00001ABA                          1102  
+00001ABA                          1103  
+00001ABA                          1104  *Input: D0 (input Line)
+00001ABA                          1105  EA_RO_REGISTER                      ;Parsing EA for ROR/ROL function for register shifts
+00001ABA                          1106  
+00001ABA  6100 03B2               1107        BSR         BitMask5to5
+00001ABE  2A07                    1108        MOVE.L      D7,D5             ;storing i/r value in D5
+00001AC0                          1109  
+00001AC0  6100 032A               1110        BSR         BitMask9to11      ;isloating source EA source register
+00001AC4  2607                    1111        MOVE.L      D7,D3             ;Moving return value to D3
+00001AC6                          1112  
+00001AC6  6100 0232               1113        BSR         EA_PARSE_REGISTER ;parsing the count/register field
+00001ACA  2A07                    1114        MOVE.L      D7,D5             ;moving result to D5
+00001ACC                          1115  
+00001ACC  BA78 0001               1116        CMP.W       %1,D5             ;if the i/r value is 1 display the data register
+00001AD0  10FC 0044               1117        MOVE.B      #'D',(A0)+
+00001AD4                          1118  
+00001AD4  BA78 0000               1119        CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
+00001AD8  10FC 0023               1120        MOVE.B      #'#',(A0)+
+00001ADC                          1121  
+00001ADC  30C5                    1122        MOVE.W      D5,(A0)+          ;pushing the register number or immediate data to the stack
+00001ADE                          1123  
+00001ADE  10FC 002C               1124        MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+00001AE2  10FC 0020               1125        MOVE.B      #' ',(A0)+
+00001AE6                          1126   
+00001AE6  6100 0336               1127        BSR         BitMask0to2       ;isloating source destination register
+00001AEA  2607                    1128        MOVE.L      D7,D3             ;Moving return value to D3
+00001AEC                          1129  
+00001AEC  6100 007E               1130        BSR         EA_PARSE_Dn       ;displaying the destination data register
+00001AF0                          1131  
+00001AF0  4E75                    1132        RTS                           ;Returning to source
+00001AF2                          1133  
+00001AF2                          1134  *Input: D0 (input Line)
+00001AF2                          1135  EA_RO_MEMORY                        ;Parsing EA for ROR/ROL function for memory shifts
+00001AF2                          1136  
+00001AF2  6100 031E               1137        BSR         BitMask3to5       ;isolating destination address mode
+00001AF6  2407                    1138        MOVE.L      D7,D2             ;moving return value to D2
+00001AF8                          1139  
+00001AF8  6100 0324               1140        BSR         BitMask0to2       ;isloating source address register
+00001AFC  2607                    1141        MOVE.L      D7,D3             ;Moving return value to D3
+00001AFE                          1142  
+00001AFE  B478 0000               1143        CMP.W       %000,D2           ;Data Register direct is not a valid EA mode
+00001B02  6700 0248               1144        BEQ         ERROR
+00001B06                          1145  
+00001B06  B478 0001               1146        CMP.W       %001,D2           ;Address Register direct is not a valid EA Mode
+00001B0A  6700 0240               1147        BEQ         ERROR
+00001B0E                          1148  
+00001B0E  B478 0007               1149        CMP.W       %111,D2           ;Immediate Data
+00001B12  B678 0002               1150        CMP.W       %010,D3
+00001B16  6700 0234               1151        BEQ         ERROR
+00001B1A                          1152  
+00001B1A  6100 0004               1153        BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
+00001B1E                          1154  
+00001B1E  4E75                    1155        RTS                           ;Returning to source
+00001B20                          1156  
+00001B20                          1157  
+00001B20                          1158  *Finds correct function to parse the EA Mode 
+00001B20                          1159  *Input: D2 (EA Mode)
+00001B20                          1160  *Input: D3 (EA Register Number)
+00001B20                          1161  EA_PARSE_MODE                       
+00001B20  B47C 0000               1162        CMP.W       #%000,D2
+00001B24  6700 0052               1163        BEQ         EA_PARSE_An
+00001B28                          1164  
+00001B28  B47C 0001               1165        CMP.W       #%001,D2
+00001B2C  6700 003E               1166        BEQ         EA_PARSE_Dn
+00001B30                          1167  
+00001B30  B47C 0002               1168        CMP.W       #%010,D2
+00001B34  6700 004E               1169        BEQ         EA_PARSE_INDIRECT_An
+00001B38                          1170  
+00001B38  B47C 0003               1171        CMP.W       #%011,D2
+00001B3C  6700 005A               1172        BEQ         EA_PARSE_INDIRECT_INCREMENT_An
+00001B40                          1173  
+00001B40  B47C 0004               1174        CMP.W       #%100,D2
+00001B44  6700 006A               1175        BEQ         EA_PARSE_INDIRECT_DECREMENT_An
+00001B48                          1176  
+00001B48  B47C 0007               1177        CMP.W       #%111,D2
+00001B4C  6700 0004               1178        BEQ         EA_ADDITIONAL_DATA
+00001B50                          1179  
+00001B50  4E75                    1180        RTS
+00001B52                          1181  
+00001B52                          1182  EA_ADDITIONAL_DATA
+00001B52  B678 0000               1183        CMP.W       %000,D3
+00001B56  6700 008C               1184        BEQ         EA_PARSE_ABSOLUTE_WORD_ADDRESS
+00001B5A                          1185  
+00001B5A  B678 0001               1186        CMP.W       %001,D3
+00001B5E  6700 0072               1187        BEQ         EA_PARSE_ABSOLUTE_LONG_ADDRESS
+00001B62                          1188  
+00001B62  B678 0004               1189        CMP.W       %100,D3
+00001B66  6700 0060               1190        BEQ         EA_PARSE_IMMEDIATE_DATA
+00001B6A                          1191  
+00001B6A  4E75                    1192        RTS
+00001B6C                          1193  
+00001B6C                          1194  *These functions are called when the EA Mode matches.
+00001B6C                          1195  *They store the human ouput code to the A0 register, then increment it.
+00001B6C                          1196  *Then return to where they were called from.
+00001B6C                          1197  
+00001B6C                          1198  
+00001B6C                          1199  *Input: D3 (Register Address number)
+00001B6C                          1200  *Uses:  D7
+00001B6C                          1201  *Output: A0
+00001B6C                          1202  EA_PARSE_Dn
+00001B6C  6100 018C               1203        BSR         EA_PARSE_REGISTER
+00001B70  10FC 0044               1204        MOVE.B      #'D',(A0)+
+00001B74  30C7                    1205        MOVE.W      D7,(A0)+
+00001B76  4E75                    1206        RTS
+00001B78                          1207  
+00001B78                          1208  EA_PARSE_An
+00001B78  6100 0180               1209        BSR         EA_PARSE_REGISTER
+00001B7C  10FC 0041               1210        MOVE.B      #'A',(A0)+
+00001B80  10C7                    1211        MOVE.B      D7,(A0)+
+00001B82  4E75                    1212        RTS
+00001B84                          1213  
+00001B84                          1214  EA_PARSE_INDIRECT_An
+00001B84  6100 0174               1215        BSR         EA_PARSE_REGISTER
+00001B88  10FC 0028               1216        MOVE.B      #'(',(A0)+
+00001B8C  10FC 0041               1217        MOVE.B      #'A',(A0)+
+00001B90  30C7                    1218        MOVE.W      D7,(A0)+
+00001B92  10FC 0029               1219        MOVE.B      #')',(A0)+
+00001B96  4E75                    1220        RTS
+00001B98                          1221  
+00001B98                          1222  EA_PARSE_INDIRECT_INCREMENT_An
+00001B98  6100 0160               1223        BSR         EA_PARSE_REGISTER
+00001B9C  10FC 0028               1224        MOVE.B      #'(',(A0)+
+00001BA0  10FC 0041               1225        MOVE.B      #'A',(A0)+
+00001BA4  30C7                    1226        MOVE.W      D7,(A0)+
+00001BA6  10FC 0029               1227        MOVE.B      #')',(A0)+
+00001BAA  10FC 002B               1228        MOVE.B      #'+',(A0)+
+00001BAE  4E75                    1229        RTS
+00001BB0                          1230  
+00001BB0                          1231  EA_PARSE_INDIRECT_DECREMENT_An
+00001BB0  6100 0148               1232        BSR         EA_PARSE_REGISTER
+00001BB4  10FC 002D               1233        MOVE.B      #'-',(A0)+
+00001BB8  10FC 0028               1234        MOVE.B      #'(',(A0)+
+00001BBC  10FC 0041               1235        MOVE.B      #'A',(A0)+
+00001BC0  10C7                    1236        MOVE.B      D7,(A0)+
+00001BC2  10FC 0029               1237        MOVE.B      #')',(A0)+
+00001BC6  4E75                    1238        RTS
+00001BC8                          1239  
+00001BC8                          1240  EA_PARSE_IMMEDIATE_DATA
+00001BC8  10FC 0023               1241        MOVE.B     #'#',(A0)+
+00001BCC  6100 0028               1242        BSR        IO_GET_WORD
+00001BD0  4E75                    1243        RTS
+00001BD2                          1244  
+00001BD2                          1245  EA_PARSE_ABSOLUTE_LONG_ADDRESS
+00001BD2  10FC 0024               1246        MOVE.B     #'$',(A0)+
+00001BD6  6100 001E               1247        BSR        IO_GET_WORD
+00001BDA  10FC 002E               1248        MOVE.B     #'.',(A0)+
+00001BDE  10FC 004C               1249        MOVE.B     #'L',(A0)+
+00001BE2  4E75                    1250        RTS
+00001BE4                          1251        
+00001BE4                          1252  EA_PARSE_ABSOLUTE_WORD_ADDRESS
+00001BE4  10FC 0024               1253        MOVE.B     #'$',(A0)+
+00001BE8  6100 000C               1254        BSR        IO_GET_WORD
+00001BEC  10FC 002E               1255        MOVE.B     #'.',(A0)+
+00001BF0  10FC 0057               1256        MOVE.B     #'W',(A0)+
+00001BF4  4E75                    1257        RTS
+00001BF6                          1258  
+00001BF6                          1259  
+00001BF6                          1260  IO_GET_WORD
+00001BF6  3015                    1261        MOVE.W  (A5),D0         *Gets the data of where the pointer is at
+00001BF8  544D                    1262        ADDQ.W  #byte,A5        *Incrementing the pointer one word
+00001BFA  3400                    1263        MOVE.W  D0,D2           *Moves data to D2 to use
+00001BFC  6100 0004               1264        BSR     n2asciiSTACK    *Branching to n2asciiSTACK to push the word to the stack
+00001C00  4E75                    1265        RTS
+00001C02                          1266  
+00001C02                          1267  
+00001C02                          1268  *Modified version of the n2ascii function that pushes to the A0 stack instead of outputting to console
+00001C02  183C 000C               1269  n2asciiSTACK      MOVE.B  #12,D4          *Sets up D4 as counter.
+00001C06  3602                    1270  n2asciiSTACK2     MOVE.W  D2,D3           *Moves to D3 to work on there 
+00001C08  E86B                    1271                    LSR.W   D4,D3           
+00001C0A  0243 000F               1272                    ANDI.W  #$000F,D3       *Masks to check last nibble
+00001C0E  B63C 0000               1273                    CMP.B   #$0,D3          *checks if D3 is equal to 0
+00001C12  6700 0086               1274                    BEQ     push0
+00001C16  B63C 0001               1275                    CMP.B   #$1,D3          *checks if D3 is equal to 1
+00001C1A  6700 0084               1276                    BEQ     push1
+00001C1E  B63C 0002               1277                    CMP.B   #$2,D3          *checks if D3 is equal to 2
+00001C22  6700 0082               1278                    BEQ     push2
+00001C26  B63C 0003               1279                    CMP.B   #$3,D3          *checks if D3 is equal to 3
+00001C2A  6700 0080               1280                    BEQ     push3
+00001C2E  B63C 0004               1281                    CMP.B   #$4,D3          *checks if D3 is equal to 4
+00001C32  6700 007E               1282                    BEQ     push4
+00001C36  B63C 0005               1283                    CMP.B   #$5,D3          *checks if D3 is equal to 5
+00001C3A  6700 007C               1284                    BEQ     push5
+00001C3E  B63C 0006               1285                    CMP.B   #$6,D3          *checks if D3 is equal to 6
+00001C42  6700 007A               1286                    BEQ     push6
+00001C46  B63C 0007               1287                    CMP.B   #$7,D3          *checks if D3 is equal to 7
+00001C4A  6700 0078               1288                    BEQ     push7
+00001C4E  B63C 0008               1289                    CMP.B   #$8,D3          *checks if D3 is equal to 8
+00001C52  6700 0076               1290                    BEQ     push8
+00001C56  B63C 0009               1291                    CMP.B   #$9,D3          *checks if D3 is equal to 9
+00001C5A  6700 0074               1292                    BEQ     push9
+00001C5E  B63C 000A               1293                    CMP.B   #$A,D3          *checks if D3 is equal to A
+00001C62  6700 0072               1294                    BEQ     pushA
+00001C66  B63C 000B               1295                    CMP.B   #$B,D3          *checks if D3 is equal to B
+00001C6A  6700 0070               1296                    BEQ     pushB
+00001C6E  B63C 000C               1297                    CMP.B   #$C,D3          *checks if D3 is equal to C
+00001C72  6700 006E               1298                    BEQ     pushC
+00001C76  B63C 000D               1299                    CMP.B   #$D,D3          *checks if D3 is equal to D
+00001C7A  6700 006C               1300                    BEQ     pushD
+00001C7E  B63C 000E               1301                    CMP.B   #$E,D3          *checks if D3 is equal to E
+00001C82  6700 006A               1302                    BEQ     pushE
+00001C86  B63C 000F               1303                    CMP.B   #$F,D3          *Checks if D3 is equal to F
+00001C8A  6700 0068               1304                    BEQ     pushF
+00001C8E  5904                    1305  n2acheckSTACK     SUB.B   #4,D4           *Decrements our counter
+00001C90  B83C 0000               1306                    CMP.B   #0,D4           *Checks if counter reached 0
+00001C94  6C00 FF70               1307                    BGE     n2asciiSTACK2   *Returns to top of loop to continue        
+00001C98  4E75                    1308                    RTS                     *Else return to caller
+00001C9A                          1309  
+00001C9A  10FC 0030               1310  push0       MOVE.B  #'0',(A0)+
+00001C9E  4E75                    1311              RTS
+00001CA0  10FC 0031               1312  push1       MOVE.B  #'1',(A0)+
+00001CA4  4E75                    1313              RTS
+00001CA6  10FC 0032               1314  push2       MOVE.B  #'2',(A0)+
+00001CAA  4E75                    1315              RTS
+00001CAC  10FC 0033               1316  push3       MOVE.B  #'3',(A0)+
+00001CB0  4E75                    1317              RTS
+00001CB2  10FC 0034               1318  push4       MOVE.B  #'4',(A0)+
+00001CB6  4E75                    1319              RTS
+00001CB8  10FC 0035               1320  push5       MOVE.B  #'5',(A0)+
+00001CBC  4E75                    1321              RTS
+00001CBE  10FC 0036               1322  push6       MOVE.B  #'6',(A0)+
+00001CC2  4E75                    1323              RTS
+00001CC4  10FC 0037               1324  push7       MOVE.B  #'7',(A0)+
+00001CC8  4E75                    1325              RTS
+00001CCA  10FC 0038               1326  push8       MOVE.B  #'8',(A0)+
+00001CCE  4E75                    1327              RTS
+00001CD0  10FC 0039               1328  push9       MOVE.B  #'9',(A0)+
+00001CD4  4E75                    1329              RTS
+00001CD6  10FC 0041               1330  pushA       MOVE.B  #'A',(A0)+
+00001CDA  4E75                    1331              RTS
+00001CDC  10FC 0042               1332  pushB       MOVE.B  #'B',(A0)+
+00001CE0  4E75                    1333              RTS
+00001CE2  10FC 0043               1334  pushC       MOVE.B  #'C',(A0)+
+00001CE6  4E75                    1335              RTS
+00001CE8  10FC 0044               1336  pushD       MOVE.B  #'D',(A0)+
+00001CEC  4E75                    1337              RTS
+00001CEE  10FC 0045               1338  pushE       MOVE.B  #'E',(A0)+
+00001CF2  4E75                    1339              RTS         
+00001CF4  10FC 0046               1340  pushF       MOVE.B  #'F',(A0)+
+00001CF8  4E75                    1341              RTS
+00001CFA                          1342  
+00001CFA                          1343  *Converts a register number to decimal and stores to D7 
+00001CFA                          1344  *Input:  D3 (Register Number)
+00001CFA                          1345  *Output: D7 
+00001CFA                          1346  EA_PARSE_REGISTER                   
+00001CFA                          1347  
+00001CFA  B67C 0000               1348        CMP.W       #%000,D3
+00001CFE  3E3C 0000               1349        MOVE.W      #0,D7
+00001D02                          1350  
+00001D02  B67C 0001               1351        CMP.W       #%001,D3
+00001D06  3E3C 0001               1352        MOVE.W      #1,D7
+00001D0A                          1353  
+00001D0A  B67C 0002               1354        CMP.W       #%010,D3
+00001D0E  3E3C 0002               1355        MOVE.W      #2,D7
+00001D12                          1356  
+00001D12  B67C 0003               1357        CMP.W       #%011,D3
+00001D16  3E3C 0003               1358        MOVE.W      #3,D7
+00001D1A                          1359  
+00001D1A  B67C 0004               1360        CMP.W       #%100,D3
+00001D1E  3E3C 0004               1361        MOVE.W      #4,D7
+00001D22                          1362  
+00001D22  B67C 0005               1363        CMP.W       #%101,D3
+00001D26  3E3C 0005               1364        MOVE.W      #5,D7
+00001D2A                          1365  
+00001D2A  B67C 0006               1366        CMP.W       #%110,D3
+00001D2E  3E3C 0006               1367        MOVE.W      #6,D7
+00001D32                          1368  
+00001D32  B67C 0007               1369        CMP.W       #%111,D3
+00001D36  3E3C 0007               1370        MOVE.W      #7,D7
+00001D3A                          1371  
+00001D3A  4E75                    1372        RTS
+00001D3C                          1373  
+00001D3C                          1374  IO_PRINT_OUTPUT
+00001D3C  41F9 0000A000           1375        LEA       OUTPUT_START,A0
+00001D42  4280                    1376        CLR.L     D0
+00001D44  103C 000E               1377        MOVE.B    #14,D0
+00001D48  4E4F                    1378        TRAP      #15
+00001D4A  4E75                    1379        RTS
+00001D4C                          1380  
+00001D4C                          1381  ERROR
+00001D4C                          1382        *TODO: handle illegal inputs
+00001D4C                          1383  
+00001D4C                          1384  end_search
+00001D4C                          1385  
+00001D4C                          1386      
+00001D4C                          1387  
+00001D4C  FFFF FFFF               1388      SIMHALT             ; halt simulator
+00001D50                          1389  
+00001D50                          1390  * Put variables and constants here
+00001D50                          1391  
+00001D50= 20                      1392  space       DC.B    $20         *space
+00001D51  =0000000D               1393  CR          EQU     $0D         *Carriage return
+00001D51  =0000000A               1394  LF          EQU     $0A         *Line Feed
+00001D51= 0D 0A 00                1395  newline     DC.B    CR,LF,0     *New Line
+00001D54  =00000002               1396  byte        EQU     2           *How much to move the search address.
+00001D54                          1397                                  *2 bytes because we're searching for a word
+00001D54  =00001000               1398  cur_address EQU     $00001000   *Start of search
+00001D54  =00001004               1399  test_end    EQU     $00001004   *End of search
+00001D54                          1400  mydata      REG     D0-D7/A0-A6  *Used for pushing registers to stack
+00001D54                          1401  
+00001D54                          1402  *Strings for I/O
+00001D54= 44 41 54 41 20 00       1403  datastring  DC.B    'DATA ',0   *Data string
+00001D5A= 4E 4F 50 00             1404  NOPstring   DC.B    'NOP',0     *NOP string
+00001D5E= 45 4F 52 00             1405  EORstring   DC.B    'EOR',0     *EOR string
+00001D62= 4F 52 49 00             1406  ORIstring   DC.B    'ORI',0     *ORI string
+00001D66= 4F 52 00                1407  ORstring    DC.B    'OR',0      *OR string
+00001D69= 41 44 44 00             1408  ADDstring   DC.B    'ADD',0     *ADD string
+00001D6D= 41 44 44 41 00          1409  ADDAstring  DC.B    'ADDA',0     *ADDA string
+00001D72= 4D 4F 56 45 4D 00       1410  MOVEMstring DC.B    'MOVEM',0   *MOVEM string
+00001D78= 4D 4F 56 45 41 00       1411  MOVEAstring DC.B    'MOVEA',0   *MOVEA string
+00001D7E= 4D 4F 56 45 00          1412  MOVEstring  DC.B    'MOVE',0    *MOVE string
+00001D83= 53 55 42 00             1413  SUBstring   DC.B    'SUB',0     *SUB string
+00001D87= 53 55 42 00             1414  SUBQstring  DC.B    'SUB',0     *SUBQ string
+00001D8B= 4D 55 4C 53 00          1415  MULSstring  DC.B    'MULS',0    *MULS string
+00001D90= 44 49 56 53 00          1416  DIVSstring  DC.B    'DIVS',0    *DIVS string
+00001D95= 43 4D 50 00             1417  CMPstring   DC.B    'CMP',0     *CMP string
+00001D99= 43 4D 50 49 00          1418  CMPIstring  DC.B    'CMPI',0    *CMPI string
+00001D9E= 4C 53 4C 00             1419  LSLstring   DC.B    'LSL',0     *LSL string
+00001DA2= 4C 53 52 00             1420  LSRstring   DC.B    'LSR',0     *LSR string
+00001DA6= 41 53 4C 00             1421  ASLstring   DC.B    'ASL',0     *ASL string
+00001DAA= 41 53 52 00             1422  ASRstring   DC.B    'ASR',0     *ASR string
+00001DAE= 52 4F 4C 00             1423  ROLstring   DC.B    'ROL',0     *ROL string
+00001DB2= 52 4F 52 00             1424  RORstring   DC.B    'ROR',0     *ROR string
+00001DB6= 42 43 4C 52 00          1425  BCLRstring  DC.B    'BCLR',0    *BCLR string
+00001DBB= 42 43 53 00             1426  BCSstring   DC.B    'BCS',0     *BCS string
+00001DBF= 42 47 45 00             1427  BGEstring   DC.B    'BGE',0     *BGE string
+00001DC3= 42 4C 54 00             1428  BLTstring   DC.B    'BLT',0     *BLT string
+00001DC7= 42 56 43 00             1429  BVCstring   DC.B    'BVC',0     *BVC string
+00001DCB= 42 52 41 00             1430  BRAstring   DC.B    'BRA',0     *BRA string
+00001DCF= 4A 53 52 00             1431  JSRstring   DC.B    'JSR',0     *JSR string
+00001DD3= 52 54 53 00             1432  RTSstring   DC.B    'RTS',0     *RTS string
+00001DD7= 4E 45 47 20 00          1433  NEGstring   DC.B    'NEG ',0     *NEG string
+00001DDC                          1434  
+00001DDC                          1435  
+00001DDC                          1436  *Bit Masks
+00001DDC                          1437  
+00001DDC  =0000F000               1438  BitMask15to12 EQU   $F000       *Mask for first byte
+00001DDC  =00008BC0               1439  BitMaskMulDivl EQU  %1000101111000000  *Mask for MULS and DIVS Long
+00001DDC  =0000FFC0               1440  BitMask15to6 EQU    $FFC0       *Mask for showing bits 15 through 6 (BCLR immidiate)
+00001DDC  =0000FF80               1441  BitMask15to7 EQU    $FF80       *Mask for showing bits 15 through 7 (MOVEM)
+00001DDC  =0000FF00               1442  BitMask15to8 EQU    $FF00       *Mask for showing first two bytes, 0'ing last 2
+00001DDC  =0000F1C0               1443  opMask      EQU     $F1C0       *Masks word so first byte and OP mode are visible
+00001DDC                          1444                                  *The rest of the word are 0's
+00001DDC  =0000F118               1445  BitMaskShifts EQU   %1111000100011000   *Masks for the shift op codes
+00001DDC                          1446  
+00001DDC                          1447  *Masked Op codes
+00001DDC  =00004E71               1448  nop_code    EQU     $4E71       *Hex for NOP
+00001DDC  =0000B100               1449  eorb_code   EQU     %1011000100000000   *Binary of EOR.B, masked
+00001DDC  =0000B140               1450  eorw_code   EQU     %1011000101000000   *Binary of EOR.W, masked
+00001DDC  =0000B180               1451  eorl_code   EQU     %1011000110000000   *Binary of EOR.L, masked
+00001DDC  =00000000               1452  ori_code    EQU     $00               *Hex of first two bytes of ORI
+00001DDC                          1453                                          *last 2 bytes don't matter for compare
+00001DDC  =00008000               1454  orbDn_code  EQU     %1000000000000000   *Binary of OR.B -> Dn
+00001DDC  =00008040               1455  orwDn_code  EQU     %1000000001000000   *Binary of OR.W -> Dn
+00001DDC  =00008080               1456  orlDn_code  EQU     %1000000010000000   *Binary of OR.L -> Dn
+00001DDC  =00008100               1457  orbEA_code  EQU     %1000000100000000   *Binary of OR.B -> EA
+00001DDC  =00008140               1458  orwEA_code  EQU     %1000000101000000   *Binary of OR.W -> EA
+00001DDC  =00008180               1459  orlEA_code  EQU     %1000000110000000   *Binary of OR.L -> EA
+00001DDC  =0000D000               1460  addbDn_code EQU     %1101000000000000   *Binary of ADD.B -> Dn
+00001DDC  =0000D040               1461  addwDn_code EQU     %1101000001000000   *Binary of ADD.W -> Dn
+00001DDC  =0000D080               1462  addlDn_code EQU     %1101000010000000   *Binary of ADD.L -> Dn
+00001DDC  =0000D100               1463  addbEA_code EQU     %1101000100000000   *Binary of ADD.B -> EA
+00001DDC  =0000D140               1464  addwEA_code EQU     %1101000101000000   *Binary of ADD.W -> EA
+00001DDC  =0000D180               1465  addlEA_code EQU     %1101000110000000   *Binary of ADD.L -> EA
+00001DDC  =0000D0C0               1466  addaw_code  EQU     %1101000011000000   *Binary of ADDA.W
+00001DDC  =0000D1C0               1467  addal_code  EQU     %1101000111000000   *Binary of ADDA.L
+00001DDC  =00004880               1468  movemr2m_code EQU   %0100100010000000   *Binary of MOVEM from register to memory
+00001DDC  =00004C80               1469  movemm2r_code EQU   %0100110010000000   *Binary of MOVEM from memory to register
+00001DDC  =00003040               1470  moveaw_code EQU     %0011000001000000   *Binary of MOVEA Word
+00001DDC  =00002040               1471  moveal_code EQU     %0010000001000000   *Binary of MOVEA long
+00001DDC  =00001000               1472  moveb_code  EQU     %0001000000000000   *Binary of MOVE byte
+00001DDC  =00003000               1473  movew_code  EQU     %0011000000000000   *Binary of MOVE word
+00001DDC  =00002000               1474  movel_code  EQU     %0010000000000000   *Binary of Move long
+00001DDC  =00009000               1475  subbDn_code EQU     %1001000000000000   *Binary of SUB.B -> Dn
+00001DDC  =00009040               1476  subwDn_code EQU     %1001000001000000   *Binary of SUB.W -> Dn
+00001DDC  =00009080               1477  sublDn_code EQU     %1001000010000000   *Binary of SUB.L -> Dn
+00001DDC  =00009100               1478  subbEA_code EQU     %1001000100000000   *Binary of SUB.B -> EA
+00001DDC  =00009140               1479  subwEA_code EQU     %1001000101000000   *Binary of SUB.W -> EA
+00001DDC  =00009180               1480  sublEA_code EQU     %1001000110000000   *Binary of SUB.L -> EA
+00001DDC  =00005100               1481  subqb_code  EQU     %0101000100000000   *Binary of SUBQ byte
+00001DDC  =00005140               1482  subqw_code  EQU     %0101000101000000   *Binary of SUBQ word
+00001DDC  =00005180               1483  subql_code  EQU     %0101000110000000   *Binary of SUBQ long
+00001DDC  =00000800               1484  mulsl_code  EQU     %0000100000000000   *Binary of MULS.L
+00001DDC  =00000840               1485  divsl_code  EQU     %0000100001000000   *Binary of DIVS.L
+00001DDC  =0000C1C0               1486  mulsw_code  EQU     %1100000111000000   *Binary of MULS.W
+00001DDC  =000081C0               1487  divsw_code  EQU     %1000000111000000   *Binary of DIVS.W
+00001DDC  =0000B000               1488  cmpb_code   EQU     %1011000000000000   *Binary of CMP.B
+00001DDC  =0000B040               1489  cmpw_code   EQU     %1011000001000000   *Binary of CMP.W
+00001DDC  =0000B080               1490  cmpl_code   EQU     %1011000010000000   *Binary of CMP.L
+00001DDC  =00000C00               1491  cmpi_code   EQU     %0000110000000000   *Binary of CMPI
+00001DDC  =0000E108               1492  lsl_code    EQU     %1110000100001000   *Binary of LSL
+00001DDC  =0000E008               1493  lsr_code    EQU     %1110000000001000   *Binary of LSR
+00001DDC  =0000E100               1494  asl_code    EQU     %1110000100000000   *Binary of ASL
+00001DDC  =0000E000               1495  asr_code    EQU     %1110000000000000   *Binary of ASR
+00001DDC  =0000E118               1496  rol_code    EQU     %1110000100011000   *Binary of ROL
+00001DDC  =0000E018               1497  ror_code    EQU     %1110000000011000   *Binary of ROR
+00001DDC  =00000880               1498  bclri_code  EQU     %0000100010000000   *Binary of BCLR with an immidiate
+00001DDC  =00000180               1499  bclr_code   EQU     %0000000110000000   *Binary of BCLR
+00001DDC  =00006500               1500  bcs_code    EQU     %0110010100000000   *Binary of BCS
+00001DDC  =00006C00               1501  bge_code    EQU     %0110110000000000   *Binary of BGE
+00001DDC  =00006D00               1502  blt_code    EQU     %0110110100000000   *Binary of BLT
+00001DDC  =00006800               1503  bvc_code    EQU     %0110100000000000   *Binary of BVC
+00001DDC  =00006000               1504  bra_code    EQU     %0110000000000000   *Binary of BRA
+00001DDC  =00004E80               1505  jsr_code    EQU     %0100111010000000   *Binary of JSR
+00001DDC  =00004E75               1506  rts_code    EQU     %0100111001110101   *Binary of RTS
+00001DDC  =00004400               1507  neg_code    EQU     %0100010000000000   *Binary of NEG
+00001DDC                          1508  
+00001DDC                          1509  *EA EQU's
+00001DDC                          1510  
+00001DDC  =0000A000               1511  OUTPUT_START EQU     $0000A000
+00001DDC                          1512  
+00001DDC                          1513  *--------------------------------*
+00001DDC                          1514  *     Written By: Zeke Snider    *
+00001DDC                          1515  *     CSS 422                    *
+00001DDC                          1516  *     Fall 2014                  *
+00001DDC                          1517  *     EA BitMasks                *
+00001DDC                          1518  *--------------------------------*
+00001DDC                          1519  
+00001DDC                          1520  *D6 is used to store the masks. 
+00001DDC                          1521  *D0 is assumed to be input line
+00001DDC                          1522  *Data is returned on D7
+00001DDC                          1523  
+00001DDC                          1524  *(These variables are flexible and can be changed later)
+00001DDC                          1525  
+00001DDC                          1526  
+00001DDC                          1527  *-----COMMON USE MASKS-----*
+00001DDC                          1528  
+00001DDC                          1529  *12-15 often used for OP codes
+00001DDC                          1530  BitMask12to15 
+00001DDC  2C39 0000F000           1531        MOVE.L   %1111000000000000,D6       ;Storing the mask to D6
+00001DE2  2E00                    1532        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001DE4  CE86                    1533        AND.L    D6,D7                      ;ANDING the Data
+00001DE6  E04F                    1534        LSR      #8,D7                      ;Shifting the irrelavant bits out the right side
+00001DE8  E84F                    1535        LSR      #4,D7
+00001DEA  4E75                    1536        RTS
+00001DEC                          1537  
+00001DEC                          1538  *9-11 commonly used for register
+00001DEC                          1539  BitMask9to11 
+00001DEC  2C38 0E00               1540        MOVE.L   %0000111000000000,D6       ;Storing the mask to D6
+00001DF0  2E00                    1541        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001DF2  CE86                    1542        AND.L    D6,D7                      ;ANDING the Data
+00001DF4  E04F                    1543        LSR      #8,D7                      ;Shifting the irrelavant bits out the right side
+00001DF6  E24F                    1544        LSR      #1,D7 
+00001DF8  4E75                    1545        RTS
+00001DFA                          1546  
+00001DFA                          1547  
+00001DFA                          1548  *6-8 commonly used for OPMode, OP code
+00001DFA                          1549  BitMask6to8 
+00001DFA  2C38 01C0               1550        MOVE.L   %0000000111000000,D6       ;Storing the mask to D6
+00001DFE  2E00                    1551        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E00  CE86                    1552        AND.L    D6,D7                      ;ANDING the Data
+00001E02  EC4F                    1553        LSR      #6,D7                      ;Shifting the irrelavant bits out the right side
+00001E04  4E75                    1554        RTS
+00001E06                          1555  
+00001E06                          1556  *6-7 commonly used for size codes
+00001E06                          1557  BitMask6to7 
+00001E06  2C38 00C0               1558        MOVE.L   %0000000011000000,D6       ;Storing the mask to D6
+00001E0A  2E00                    1559        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E0C  CE86                    1560        AND.L    D6,D7                      ;ANDING the Data
+00001E0E  EC4F                    1561        LSR      #6,D7                      ;Shifting the irrelavant bits out the right side
+00001E10  4E75                    1562        RTS
+00001E12                          1563  
+00001E12                          1564  *3-5 commonly used for EA Mode
+00001E12                          1565  BitMask3to5 
+00001E12  3C3C 0038               1566        MOVE.W   #%0000000000111000,D6       ;Storing the mask to D6
+00001E16  2E00                    1567        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E18  CE86                    1568        AND.L    D6,D7                      ;ANDING the Data
+00001E1A  E64F                    1569        LSR      #3,D7                      ;Shifting the irrelavant bits out the right side
+00001E1C  4E75                    1570        RTS
+00001E1E                          1571  
+00001E1E                          1572  *0-2 commonly used for EA Register
+00001E1E                          1573  BitMask0to2 
+00001E1E  3C3C 0007               1574        MOVE.W   #%0000000000000111,D6       ;Storing the mask to D6
+00001E22  2E00                    1575        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E24  CE86                    1576        AND.L    D6,D7                      ;ANDING the Data
+00001E26  4E75                    1577        RTS
+00001E28                          1578  
+00001E28                          1579  *-----SPECIFIC USE MASKS----*
+00001E28                          1580  
+00001E28                          1581  *14-15 used for MOVE OP code
+00001E28                          1582  BitMask14to15 
+00001E28  2C39 0000C000           1583        MOVE.L   %1100000000000000,D6       ;Storing the mask to D6
+00001E2E  2E00                    1584        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E30  CE86                    1585        AND.L    D6,D7                      ;ANDING the Data
+00001E32  E04F                    1586        LSR      #8,D7                     ;Shifting the irrelavant bits out the right side
+00001E34  EC4F                    1587        LSR      #6,D7
+00001E36  4E75                    1588        RTS
+00001E38                          1589  
+00001E38                          1590  *12-13 used for MOVE size code
+00001E38                          1591  BitMask12to13 
+00001E38  2C38 3000               1592        MOVE.L   %0011000000000000,D6       ;Storing the mask to D6
+00001E3C  2E00                    1593        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E3E  CE86                    1594        AND.L    D6,D7                      ;ANDING the Data
+00001E40  E04F                    1595        LSR      #8,D7                      ;Shifting the irrelavant bits out the right side
+00001E42  E84F                    1596        LSR      #4,D7
+00001E44  4E75                    1597        RTS
+00001E46                          1598  
+00001E46                          1599  *8-15 used for ORI OP Code
+00001E46                          1600  BitMask8to15 
+00001E46  2C39 0000FF00           1601        MOVE.L   %1111111100000000,D6       ;Storing the mask to D6
+00001E4C  2E00                    1602        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E4E  CE86                    1603        AND.L    D6,D7                      ;ANDING the Data
+00001E50  E04F                    1604        LSR      #8,D7                      ;Shifting the irrelavant bits out the right side
+00001E52  4E75                    1605        RTS
+00001E54                          1606  
+00001E54                          1607  *7-15 used for MOVEM OP Code
+00001E54                          1608  BitMask7to15 
+00001E54  2C39 0000FF80           1609        MOVE.L   %1111111110000000,D6       ;Storing the mask to D6
+00001E5A  2E00                    1610        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E5C  CE86                    1611        AND.L    D6,D7                      ;ANDING the Data
+00001E5E  EE4F                    1612        LSR      #7,D7                      ;Shifting the irrelavant bits out the right side
+00001E60  4E75                    1613        RTS
+00001E62                          1614  
+00001E62                          1615  *8,12-15 SUBQ OP Code
+00001E62                          1616  BitMaskSubQ 
+00001E62  2C39 0000F100           1617        MOVE.L   %1111000100000000,D6       ;Storing the mask to D6
+00001E68  2E00                    1618        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E6A  CE86                    1619        AND.L    D6,D7                      ;ANDING the Data
+00001E6C  4E75                    1620        RTS
+00001E6E                          1621  
+00001E6E                          1622  
+00001E6E                          1623  *5 used for LSR/LSL i/r
+00001E6E                          1624  BitMask5to5 
+00001E6E  2C38 0020               1625        MOVE.L   %0000000000100000,D6       ;Storing the mask to D6
+00001E72  2E00                    1626        MOVE.L   D0,D7                      ;Copying the input line to D7
+00001E74  CE86                    1627        AND.L    D6,D7                      ;ANDING the Data
+00001E76  E64F                    1628        LSR      #3,D7                      ;Shifting the irrelavant bits out the right side
+00001E78  4E75                    1629        RTS
+00001E7A                          1630  
+00001E7A                          1631  
+00001E7A                          1632  
+00001E7A                          1633      END    START        ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+ADDAL_CODE          D1C0
+ADDASTRING          1D6D
+ADDAW_CODE          D0C0
+ADDBDN_CODE         D000
+ADDBEA_CODE         D100
+ADDLDN_CODE         D080
+ADDLEA_CODE         D180
+ADDSTRING           1D69
+ADDWDN_CODE         D040
+ADDWEA_CODE         D140
+ASLSTRING           1DA6
+ASL_CODE            E100
+ASRSTRING           1DAA
+ASR_CODE            E000
+BCLRI_CODE          880
+BCLRSTRING          1DB6
+BCLR_CODE           180
+BCSSTRING           1DBB
+BCS_CODE            6500
+BGESTRING           1DBF
+BGE_CODE            6C00
+BITMASK0TO2         1E1E
+BITMASK12TO13       1E38
+BITMASK12TO15       1DDC
+BITMASK14TO15       1E28
+BITMASK15TO12       F000
+BITMASK15TO6        FFC0
+BITMASK15TO7        FF80
+BITMASK15TO8        FF00
+BITMASK3TO5         1E12
+BITMASK5TO5         1E6E
+BITMASK6TO7         1E06
+BITMASK6TO8         1DFA
+BITMASK7TO15        1E54
+BITMASK8TO15        1E46
+BITMASK9TO11        1DEC
+BITMASKMULDIVL      8BC0
+BITMASKSHIFTS       F118
+BITMASKSUBQ         1E62
+BLTSTRING           1DC3
+BLT_CODE            6D00
+BRASTRING           1DCB
+BRA_CODE            6000
+BVCSTRING           1DC7
+BVC_CODE            6800
+BYTE                2
+CMPB_CODE           B000
+CMPISTRING          1D99
+CMPI_CODE           C00
+CMPL_CODE           B080
+CMPSTRING           1D95
+CMPW_CODE           B040
+COMPARE_ADD         1112
+COMPARE_BCC         1296
+COMPARE_BCLR        128A
+COMPARE_BCLRI       127E
+COMPARE_CMP         121A
+COMPARE_CMPI        1236
+COMPARE_DIVSL       11F6
+COMPARE_DIVSW       120E
+COMPARE_EOR         10F6
+COMPARE_JSR         12C2
+COMPARE_MOVE        117E
+COMPARE_MOVEA       116A
+COMPARE_MOVEM       1156
+COMPARE_MULSL       11EA
+COMPARE_MULSW       1202
+COMPARE_NEG         12DA
+COMPARE_NOP         10AC
+COMPARE_OR          10C2
+COMPARE_ORI         10B8
+COMPARE_RTS         12CE
+COMPARE_SHIFT       1242
+COMPARE_SUB         119A
+COMPARE_SUBQ        11CE
+COMPMASK            1532
+CR                  D
+CUR_ADDRESS         1000
+DATASTRING          1D54
+DIVSL_CODE          840
+DIVSSTRING          1D90
+DIVSW_CODE          81C0
+EA_ADDITIONAL_DATA  1B52
+EA_AND              17C0
+EA_ANDI             182C
+EA_AND_DESTINATION  1804
+EA_AND_SOURCE       17E8
+EA_AS_MEMORY        1A8C
+EA_AS_REGISTER      1A54
+EA_CMP              194C
+EA_CMPI             1970
+EA_DIVS             19C2
+EA_LS_MEMORY        1A26
+EA_LS_REGISTER      19EE
+EA_MOVE             18F6
+EA_MOVEA            1928
+EA_MULS             1996
+EA_NEG              16E2
+EA_OR               1712
+EA_ORI              177E
+EA_OR_DESTINATION   1756
+EA_OR_SOURCE        173A
+EA_PARSE_ABSOLUTE_LONG_ADDRESS  1BD2
+EA_PARSE_ABSOLUTE_WORD_ADDRESS  1BE4
+EA_PARSE_AN         1B78
+EA_PARSE_DN         1B6C
+EA_PARSE_IMMEDIATE_DATA  1BC8
+EA_PARSE_INDIRECT_AN  1B84
+EA_PARSE_INDIRECT_DECREMENT_AN  1BB0
+EA_PARSE_INDIRECT_INCREMENT_AN  1B98
+EA_PARSE_MODE       1B20
+EA_PARSE_REGISTER   1CFA
+EA_RO_MEMORY        1AF2
+EA_RO_REGISTER      1ABA
+EA_SUB              1854
+EA_SUBQ             18C8
+EA_SUB_DESTINATION  18A0
+EA_SUB_SOURCE       187E
+ENDADD              1074
+ENDBCC              1060
+ENDBCLR             1090
+ENDBCLRI            1044
+ENDCMP              108C
+ENDCMPI             105C
+ENDDIVSL            103C
+ENDDIVSW            1088
+ENDEOR              106C
+ENDJSR              1048
+ENDMOVE             1098
+ENDMOVEA            1078
+ENDMOVEM            1050
+ENDMULSL            1038
+ENDMULSW            1084
+ENDNEG              1064
+ENDNOP              102C
+ENDOP               10A6
+ENDOR               1070
+ENDORI              1058
+ENDRTS              1030
+ENDSHIFT            109C
+ENDSUB              107C
+ENDSUBQ             1080
+END_SEARCH          1D4C
+EORB_CODE           B100
+EORL_CODE           B180
+EORSTRING           1D5E
+EORW_CODE           B140
+ERROR               1D4C
+GETOP               1026
+IO_GET_WORD         1BF6
+IO_PRINT_OUTPUT     1D3C
+ISADD               1336
+ISADDA              134A
+ISASL               144E
+ISASR               143A
+ISBCLR              148A
+ISBCS               149E
+ISBGE               14B2
+ISBLT               14C6
+ISBRA               14EE
+ISBVC               14DA
+ISCMP               13EA
+ISCMPI              13FE
+ISDATA              1582
+ISDIVS              13D6
+ISEOR               12FA
+ISJSR               1502
+ISLSL               1426
+ISLSR               1412
+ISMOVE              1386
+ISMOVEA             1372
+ISMOVEM             135E
+ISMULS              13C2
+ISNEG               152A
+ISNOP               12E6
+ISOR                1322
+ISORI               130E
+ISROL               1476
+ISROR               1462
+ISRTS               1516
+ISSUB               139A
+ISSUBQ              13AE
+JSRSTRING           1DCF
+JSR_CODE            4E80
+LF                  A
+LOOP                1010
+LSLSTRING           1D9E
+LSL_CODE            E108
+LSRSTRING           1DA2
+LSR_CODE            E008
+MASK15TO12          1542
+MASK15TO6           1552
+MASK15TO7           154A
+MASK15TO8           153A
+MASKMULDIVL         155A
+MASKSHIFT           1562
+MOVEAL_CODE         2040
+MOVEASTRING         1D78
+MOVEAW_CODE         3040
+MOVEB_CODE          1000
+MOVEL_CODE          2000
+MOVEMM2R_CODE       4C80
+MOVEMR2M_CODE       4880
+MOVEMSTRING         1D72
+MOVESTRING          1D7E
+MOVEW_CODE          3000
+MULSL_CODE          800
+MULSSTRING          1D8B
+MULSW_CODE          C1C0
+MYDATA              7FFF
+N2ACHECK            162C
+N2ACHECKSTACK       1C8E
+N2ASCII             15A0
+N2ASCII2            15A4
+N2ASCIISTACK        1C02
+N2ASCIISTACK2       1C06
+NEGSTRING           1DD7
+NEG_CODE            4400
+NEWLINE             1D51
+NOPSTRING           1D5A
+NOP_CODE            4E71
+OPMASK              F1C0
+ORBDN_CODE          8000
+ORBEA_CODE          8100
+ORISTRING           1D62
+ORI_CODE            0
+ORLDN_CODE          8080
+ORLEA_CODE          8180
+ORSTRING            1D66
+ORWDN_CODE          8040
+ORWEA_CODE          8140
+OUTADDRESS          156A
+OUTPUT_START        A000
+PRINT0              1638
+PRINT1              1642
+PRINT2              164C
+PRINT3              1656
+PRINT4              1660
+PRINT5              166A
+PRINT6              1674
+PRINT7              167E
+PRINT8              1688
+PRINT9              1692
+PRINTA              169C
+PRINTB              16A6
+PRINTC              16B0
+PRINTCHAR           16D8
+PRINTD              16BA
+PRINTE              16C4
+PRINTF              16CE
+PUSH0               1C9A
+PUSH1               1CA0
+PUSH2               1CA6
+PUSH3               1CAC
+PUSH4               1CB2
+PUSH5               1CB8
+PUSH6               1CBE
+PUSH7               1CC4
+PUSH8               1CCA
+PUSH9               1CD0
+PUSHA               1CD6
+PUSHB               1CDC
+PUSHC               1CE2
+PUSHD               1CE8
+PUSHE               1CEE
+PUSHF               1CF4
+ROLSTRING           1DAE
+ROL_CODE            E118
+RORSTRING           1DB2
+ROR_CODE            E018
+RTSSTRING           1DD3
+RTS_CODE            4E75
+SPACE               1D50
+START               1000
+SUBBDN_CODE         9000
+SUBBEA_CODE         9100
+SUBLDN_CODE         9080
+SUBLEA_CODE         9180
+SUBQB_CODE          5100
+SUBQL_CODE          5180
+SUBQSTRING          1D87
+SUBQW_CODE          5140
+SUBSTRING           1D83
+SUBWDN_CODE         9040
+SUBWEA_CODE         9140
+TEST_END            1004

@@ -832,3 +832,8 @@ SIMHALT
 OUTPUT_START EQU     $000A000
 byte         EQU     2           *How much to move the search address.
       
+
+*~Font name~Courier New~
+*~Font size~10~
+*~Tab type~1~
+*~Tab size~4~
