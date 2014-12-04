@@ -70,8 +70,8 @@ EA_OR_SOURCE
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       MOVE.L      D5,D3             ;Moving register number to D3
       BSR         EA_PARSE_Dn       ;Outputting register
@@ -90,8 +90,8 @@ EA_OR_DESTINATION
       MOVE.L      D5,D3             ;Moving register number to D3
       BSR         EA_PARSE_Dn       ;Outputting register
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       MOVE.L      D6,D3             ;Moving EA register back
       BSR         EA_PARSE_MODE     ;outputing the destination EA
@@ -106,8 +106,8 @@ EA_ORI                              ;Parsing EA for ORI function
 
       BSR         EA_PARSE_IMMEDIATE_DATA  ;displays immediate data
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       BSR         BitMask3to5       ;isolating destination address mode
       MOVE.L      D7,D2             ;moving return value to D2
@@ -117,8 +117,8 @@ EA_ORI                              ;Parsing EA for ORI function
 
       BSR         EA_PARSE_IMMEDIATE_DATA  ;parsing immediate data
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for ORI
       BEQ         ERROR
@@ -165,8 +165,8 @@ EA_AND_SOURCE
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       MOVE.L      D5,D7             ;Moving register number to D7
       BSR         EA_PARSE_Dn       ;Outputting register
@@ -185,8 +185,8 @@ EA_AND_DESTINATION
       MOVE.L      D5,D7             ;Moving register number to D3
       BSR         EA_PARSE_Dn       ;Outputting register
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       MOVE.L      D6,D7             ;Moving EA register back
       BSR         EA_PARSE_MODE     ;outputing the destination EA
@@ -204,8 +204,8 @@ EA_ANDI                             ;Parsing EA for ANDI function
 
       BSR         EA_PARSE_IMMEDIATE_DATA          
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
       BEQ         ERROR
@@ -249,8 +249,8 @@ EA_SUB_SOURCE
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       MOVE.L      D5,D7             ;Moving register number to D7
       BSR         EA_PARSE_Dn       ;Outputting register
@@ -269,8 +269,8 @@ EA_SUB_DESTINATION
       MOVE.L      D5,D7             ;Moving register number to D3
       BSR         EA_PARSE_Dn       ;Outputting register
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       MOVE.L      D6,D7             ;Moving EA register back
       BSR         EA_PARSE_MODE     ;outputing the destination EA
@@ -290,8 +290,8 @@ EA_SUBQ                             ;Parsing EA for SUBQ function
 
       BSR         EA_PARSE_IMMEDIATE_DATA          
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       CMP.L       #1,D1             ;Address register direct is not a valid input for EA destinaton
       CMP.L       %001,D2           ;if it is a byte-operation
@@ -314,8 +314,8 @@ EA_MOVE                             ;Parsing EA for MOVE function
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       BSR         BitMask6to8       ;isolating destination address mode
       MOVE.L      D7,D2             ;moving return value to D2
@@ -341,8 +341,8 @@ EA_MOVEA                            ;Parsing EA for MOVEA function
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       BSR         BitMask9to11      ;isloating destination address register
 
@@ -362,8 +362,8 @@ EA_CMP                             ;Parsing EA for CMP function
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       BSR         BitMask9to11      ;isloating destination address register
 
@@ -383,8 +383,8 @@ EA_CMPI                             ;Parsing EA for CMPI function
 
       BSR         EA_PARSE_IMMEDIATE_DATA          
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       CMP.L       %001,D2           ;Address register direct is not a valid input for EA destinaton
       BEQ         ERROR
@@ -408,8 +408,8 @@ EA_MULS                             ;Parsing EA for MULS function
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       BSR         BitMask9to11      ;isloating destination address register
 
@@ -432,8 +432,8 @@ EA_DIVS                             ;Parsing EA for DIVS function
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
 
       BSR         BitMask9to11      ;isloating destination address register
 
@@ -455,15 +455,15 @@ EA_LS_REGISTER                      ;Parsing EA for LSR/LSL function for registe
       MOVE.L      D7,D5             ;moving result to D5
 
       CMP.W       %1,D5             ;if the i/r value is 1 display the data register
-      MOVE.W      #'D',(A0)+
+      MOVE.B      #'D',(A0)+
 
       CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
-      MOVE.W      #'#',(A0)+
+      MOVE.B      #'#',(A0)+
 
-      MOVE.W      D5,(A0)+          ;pushing the register number or immediate data to the stack
+      MOVE.B      D5,(A0)+          ;pushing the register number or immediate data to the stack
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
  
       BSR         BitMask0to2       ;isloating source destination register
       MOVE.L      D7,D3             ;Moving return value to D3
@@ -508,15 +508,15 @@ EA_AS_REGISTER                      ;Parsing EA for ASR/ASL function for registe
       MOVE.L      D7,D5             ;moving result to D5
 
       CMP.W       %1,D5             ;if the i/r value is 1 display the data register
-      MOVE.W      #'D',(A0)+
+      MOVE.B      #'D',(A0)+
 
       CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
-      MOVE.W      #'#',(A0)+
+      MOVE.B      #'#',(A0)+
 
-      MOVE.W      D5,(A0)+          ;pushing the register number or immediate data to the stack
+      MOVE.B      D5,(A0)+          ;pushing the register number or immediate data to the stack
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
  
       BSR         BitMask0to2       ;isloating source destination register
       MOVE.L      D7,D3             ;Moving return value to D3
@@ -562,15 +562,15 @@ EA_RO_REGISTER                      ;Parsing EA for ROR/ROL function for registe
       MOVE.L      D7,D5             ;moving result to D5
 
       CMP.W       %1,D5             ;if the i/r value is 1 display the data register
-      MOVE.W      #'D',(A0)+
+      MOVE.B      #'D',(A0)+
 
       CMP.W       %0,D5             ;if the i/r value is 0 display immediate data
-      MOVE.W      #'#',(A0)+
+      MOVE.B      #'#',(A0)+
 
       MOVE.W      D5,(A0)+          ;pushing the register number or immediate data to the stack
 
-      MOVE.W      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.W      #' ',(A0)+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
  
       BSR         BitMask0to2       ;isloating source destination register
       MOVE.L      D7,D3             ;Moving return value to D3
@@ -649,59 +649,59 @@ EA_ADDITIONAL_DATA
 *Output: A0
 EA_PARSE_Dn
       BSR         EA_PARSE_REGISTER
-      MOVE.W      #'D',(A0)+
+      MOVE.B      #'D',(A0)+
       MOVE.W      D7,(A0)+
       RTS
 
 EA_PARSE_An
       BSR         EA_PARSE_REGISTER
-      MOVE.W      #'A',(A0)+
+      MOVE.B      #'A',(A0)+
       MOVE.W      D7,(A0)+
       RTS
 
 EA_PARSE_INDIRECT_An
       BSR         EA_PARSE_REGISTER
-      MOVE.W      #'(',(A0)+
-      MOVE.W      #'A',(A0)+
+      MOVE.B      #'(',(A0)+
+      MOVE.B      #'A',(A0)+
       MOVE.W      D7,(A0)+
-      MOVE.W      #')',(A0)+
+      MOVE.B      #')',(A0)+
       RTS
 
 EA_PARSE_INDIRECT_INCREMENT_An
       BSR         EA_PARSE_REGISTER
-      MOVE.W      #'(',(A0)+
-      MOVE.W      #'A',(A0)+
+      MOVE.B      #'(',(A0)+
+      MOVE.B      #'A',(A0)+
       MOVE.W      D7,(A0)+
-      MOVE.W      #')',(A0)+
-      MOVE.W      #'+',(A0)+
+      MOVE.B      #')',(A0)+
+      MOVE.B      #'+',(A0)+
       RTS
 
 EA_PARSE_INDIRECT_DECREMENT_An
       BSR         EA_PARSE_REGISTER
-      MOVE.W      #'-',(A0)+
-      MOVE.W      #'(',(A0)+
-      MOVE.W      #'A',(A0)+
-      MOVE.W      D7,(A0)+
-      MOVE.W      #')',(A0)+
+      MOVE.B      #'-',(A0)+
+      MOVE.B      #'(',(A0)+
+      MOVE.B      #'A',(A0)+
+      MOVE.B      D7,(A0)+
+      MOVE.B      #')',(A0)+
       RTS
 
 EA_PARSE_IMMEDIATE_DATA
-      MOVE.W     #'#',(A0)+
+      MOVE.B     #'#',(A0)+
       BSR        IO_GET_WORD
       RTS
 
 EA_PARSE_ABSOLUTE_LONG_ADDRESS
-      MOVE.W     #'$',(A0)+
+      MOVE.B     #'$',(A0)+
       BSR        IO_GET_WORD
-      MOVE.W     #'.',(A0)+
-      MOVE.W     #'L',(A0)+
+      MOVE.B     #'.',(A0)+
+      MOVE.B     #'L',(A0)+
       RTS
       
 EA_PARSE_ABSOLUTE_WORD_ADDRESS
-      MOVE.W     #'$',(A0)+
+      MOVE.B     #'$',(A0)+
       BSR        IO_GET_WORD
-      MOVE.W     #'.',(A0)+
-      MOVE.W     #'W',(A0)+
+      MOVE.B     #'.',(A0)+
+      MOVE.B     #'W',(A0)+
       RTS
 
 
@@ -718,35 +718,35 @@ n2asciiSTACK      MOVE.B  #12,D4          *Sets up D4 as counter.
 n2asciiSTACK2     MOVE.W  D2,D3           *Moves to D3 to work on there 
                   LSR.W   D4,D3           
                   ANDI.W  #$000F,D3       *Masks to check last nibble
-                  CMP.B   #$0,D3          *Chekcs if D3 is equal to 0
+                  CMP.B   #$0,D3          *checks if D3 is equal to 0
                   BEQ     push0
-                  CMP.B   #$1,D3          *Chekcs if D3 is equal to 1
+                  CMP.B   #$1,D3          *checks if D3 is equal to 1
                   BEQ     push1
-                  CMP.B   #$2,D3          *Chekcs if D3 is equal to 2
+                  CMP.B   #$2,D3          *checks if D3 is equal to 2
                   BEQ     push2
-                  CMP.B   #$3,D3          *Chekcs if D3 is equal to 3
+                  CMP.B   #$3,D3          *checks if D3 is equal to 3
                   BEQ     push3
-                  CMP.B   #$4,D3          *Chekcs if D3 is equal to 4
+                  CMP.B   #$4,D3          *checks if D3 is equal to 4
                   BEQ     push4
-                  CMP.B   #$5,D3          *Chekcs if D3 is equal to 5
+                  CMP.B   #$5,D3          *checks if D3 is equal to 5
                   BEQ     push5
-                  CMP.B   #$6,D3          *Chekcs if D3 is equal to 6
+                  CMP.B   #$6,D3          *checks if D3 is equal to 6
                   BEQ     push6
-                  CMP.B   #$7,D3          *Chekcs if D3 is equal to 7
+                  CMP.B   #$7,D3          *checks if D3 is equal to 7
                   BEQ     push7
-                  CMP.B   #$8,D3          *Chekcs if D3 is equal to 8
+                  CMP.B   #$8,D3          *checks if D3 is equal to 8
                   BEQ     push8
-                  CMP.B   #$9,D3          *Chekcs if D3 is equal to 9
+                  CMP.B   #$9,D3          *checks if D3 is equal to 9
                   BEQ     push9
-                  CMP.B   #$A,D3          *Chekcs if D3 is equal to A
+                  CMP.B   #$A,D3          *checks if D3 is equal to A
                   BEQ     pushA
-                  CMP.B   #$B,D3          *Chekcs if D3 is equal to B
+                  CMP.B   #$B,D3          *checks if D3 is equal to B
                   BEQ     pushB
-                  CMP.B   #$C,D3          *Chekcs if D3 is equal to C
+                  CMP.B   #$C,D3          *checks if D3 is equal to C
                   BEQ     pushC
-                  CMP.B   #$D,D3          *Chekcs if D3 is equal to D
+                  CMP.B   #$D,D3          *checks if D3 is equal to D
                   BEQ     pushD
-                  CMP.B   #$E,D3          *Chekcs if D3 is equal to E
+                  CMP.B   #$E,D3          *checks if D3 is equal to E
                   BEQ     pushE
                   CMP.B   #$F,D3          *Checks if D3 is equal to F
                   BEQ     pushF
@@ -755,37 +755,37 @@ n2acheckSTACK     SUB.B   #4,D4           *Decrements our counter
                   BGE     n2asciiSTACK2   *Returns to top of loop to continue        
                   RTS                     *Else return to caller
 
-push0       MOVE.W  #'0',(A0)+
+push0       MOVE.B  #'0',(A0)+
             RTS
-push1       MOVE.W  #'1',(A0)+
+push1       MOVE.B  #'1',(A0)+
             RTS
-push2       MOVE.W  #'2',(A0)+
+push2       MOVE.B  #'2',(A0)+
             RTS
-push3       MOVE.W  #'3',(A0)+
+push3       MOVE.B  #'3',(A0)+
             RTS
-push4       MOVE.W  #'4',(A0)+
+push4       MOVE.B  #'4',(A0)+
             RTS
-push5       MOVE.W  #'5',(A0)+
+push5       MOVE.B  #'5',(A0)+
             RTS
-push6       MOVE.W  #'6',(A0)+
+push6       MOVE.B  #'6',(A0)+
             RTS
-push7       MOVE.W  #'7',(A0)+
+push7       MOVE.B  #'7',(A0)+
             RTS
-push8       MOVE.W  #'8',(A0)+
+push8       MOVE.B  #'8',(A0)+
             RTS
-push9       MOVE.W  #'9',(A0)+
+push9       MOVE.B  #'9',(A0)+
             RTS
-pushA       MOVE.W  #'A',(A0)+
+pushA       MOVE.B  #'A',(A0)+
             RTS
-pushB       MOVE.W  #'B',(A0)+
+pushB       MOVE.B  #'B',(A0)+
             RTS
-pushC       MOVE.W  #'C',(A0)+
+pushC       MOVE.B  #'C',(A0)+
             RTS
-pushD       MOVE.W  #'D',(A0)+
+pushD       MOVE.B  #'D',(A0)+
             RTS
-pushE       MOVE.W  #'E',(A0)+
+pushE       MOVE.B  #'E',(A0)+
             RTS         
-pushF       MOVE.W  #'F',(A0)+
+pushF       MOVE.B  #'F',(A0)+
             RTS
 
 *Converts a register number to decimal and stores to D7 
@@ -819,12 +819,16 @@ EA_PARSE_REGISTER
 
       RTS
 
-
+IO_PRINT_OUTPUT
+      LEA       OUPUT_START,A0
+      MOVE.B    #1,D0
+      TRAP      #15
 
 ERROR
       *TODO: handle illegal inputs
 
 SIMHALT
 
-byte        EQU     2           *How much to move the search address.
+OUTPUT_START EQU     $000A000
+byte         EQU     2           *How much to move the search address.
       
