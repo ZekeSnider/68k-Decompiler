@@ -7,7 +7,7 @@
     ORG    $1000
 START:                  ; first instruction of program
 * Put program code here
-            NEG     D0              *Test NEG
+            NEG     D1              *Test NEG
             CLR.W   D0              *Clears D0
             LEA     cur_address,A5  *Load start address
             LEA     test_end,A6     *Load end address
@@ -619,7 +619,7 @@ EA_OR                              ;Parsing EA for OR function
 *Called if the EA address field is a source operand
 EA_OR_SOURCE
       CMP.L       #%001,D2           ;Address register direct is not a valid input for EA Source
-      BEQ         ERROR
+      BEQ         ERRORg
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
@@ -1161,10 +1161,10 @@ EA_RO_MEMORY                        ;Parsing EA for ROR/ROL function for memory 
 *Input: D3 (EA Register Number)
 EA_PARSE_MODE                       
       CMP.W       #%000,D2
-      BEQ         EA_PARSE_An
+      BEQ         EA_PARSE_Dn
 
       CMP.W       #%001,D2
-      BEQ         EA_PARSE_Dn
+      BEQ         EA_PARSE_An
 
       CMP.W       #%010,D2
       BEQ         EA_PARSE_INDIRECT_An
@@ -1203,7 +1203,7 @@ EA_ADDITIONAL_DATA
 EA_PARSE_Dn
       BSR         EA_PARSE_REGISTER
       MOVE.B      #'D',(A0)+
-      MOVE.W      D7,(A0)+
+      MOVE.B      D7,(A0)+
       RTS
 
 EA_PARSE_An
@@ -1216,7 +1216,7 @@ EA_PARSE_INDIRECT_An
       BSR         EA_PARSE_REGISTER
       MOVE.B      #'(',(A0)+
       MOVE.B      #'A',(A0)+
-      MOVE.W      D7,(A0)+
+      MOVE.B      D7,(A0)+
       MOVE.B      #')',(A0)+
       RTS
 
@@ -1224,7 +1224,7 @@ EA_PARSE_INDIRECT_INCREMENT_An
       BSR         EA_PARSE_REGISTER
       MOVE.B      #'(',(A0)+
       MOVE.B      #'A',(A0)+
-      MOVE.W      D7,(A0)+
+      MOVE.B      D7,(A0)+
       MOVE.B      #')',(A0)+
       MOVE.B      #'+',(A0)+
       RTS
@@ -1341,36 +1341,60 @@ pushE       MOVE.B  #'E',(A0)+
 pushF       MOVE.B  #'F',(A0)+
             RTS
 
-*Converts a register number to decimal and stores to D7 
+*Converts a register number to ascii number and stores to D7 
 *Input:  D3 (Register Number)
 *Output: D7 
 EA_PARSE_REGISTER                   
 
       CMP.W       #%000,D3
-      MOVE.W      #0,D7
+      BEQ         EA_MOVE0
 
       CMP.W       #%001,D3
-      MOVE.W      #1,D7
+      BEQ         EA_MOVE1
 
       CMP.W       #%010,D3
-      MOVE.W      #2,D7
+      BEQ         EA_MOVE2
 
       CMP.W       #%011,D3
-      MOVE.W      #3,D7
+      BEQ         EA_MOVE3
 
       CMP.W       #%100,D3
-      MOVE.W      #4,D7
+      BEQ         EA_MOVE4
 
       CMP.W       #%101,D3
-      MOVE.W      #5,D7
+      BEQ         EA_MOVE5
 
       CMP.W       #%110,D3
-      MOVE.W      #6,D7
+      BEQ         EA_MOVE6
 
       CMP.W       #%111,D3
-      MOVE.W      #7,D7
+      BEQ         EA_MOVE7
 
       RTS
+
+EA_MOVE0    MOVE.W      #'0',D7
+            RTS
+
+EA_MOVE1    MOVE.W      #'1',D7
+            RTS
+
+EA_MOVE2    MOVE.W      #'2',D7
+            RTS
+
+EA_MOVE3    MOVE.W      #'3',D7
+            RTS
+
+EA_MOVE4    MOVE.W      #'4',D7
+            RTS
+
+EA_MOVE5    MOVE.W      #'5',D7
+            RTS
+
+EA_MOVE6    MOVE.W      #'6',D7
+            RTS
+
+EA_MOVE7    MOVE.W      #'7',D7
+            RTS
 
 IO_PRINT_OUTPUT
       MOVE.B    #%0,(A0)+           ;Adding terminating null to end of string
