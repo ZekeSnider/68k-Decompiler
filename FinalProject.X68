@@ -402,9 +402,10 @@ isRTS       BSR     outaddress      *prints current address
             BRA     endOP
 isNEG       
 *BSR     outaddress      *prints current address
-*            LEA     NEGstring,A1    *Loads NEGstring for printing
-*            MOVE.B  #14,D0          *Sets up trap
-*            TRAP    #15
+            MOVE.B  #'N',(A0)+
+            MOVE.B  #'E',(A0)+
+            MOVE.B  #'G',(A0)+
+            MOVE.B  #' ',(A0)+
             BSR     EA_NEG
             BRA     endOP
 
@@ -1372,9 +1373,11 @@ EA_PARSE_REGISTER
       RTS
 
 IO_PRINT_OUTPUT
-      LEA       OUTPUT_START,A0
-      CLR.L     D0
-      MOVE.B    #14,D0
+      MOVE.B    #%0,(A0)+           ;Adding terminating null to end of string
+      LEA       OUTPUT_START,A0     ;Reseting A0 back to start of string
+      MOVEA.L   A0,A1               ;Moving to A1 for printing
+      CLR.L     D0                  ;clearing the trap byte
+      MOVE.B    #13,D0              ;printing string with new line
       TRAP      #15
       RTS
 
