@@ -53,7 +53,8 @@ endSUBQ     BRA     compare_MULSW   *Compares the MULS.W op code
 endMULSW    BRA     compare_DIVSW   *Compares the DIVS.W op code
 endDIVSW    BRA     compare_CMP     *Compares the CMP op codes
 endCMP      BRA     compare_BCLR    *Compares the BCLR without immidate op code
-endBCLR
+endBCLR     BRA     compare_LEA     *Compares the LEA op code
+endLEA
             BSR     mask15to12      *Masks D2 to first 4 bits
             BRA     compare_MOVE    *Compares the MOVE op codes
 endMOVE     BRA     compare_shift   *Compares LSL,LSR, ASL, and ASR
@@ -254,6 +255,11 @@ compare_NEG
             CMP.W   #neg_code,D2    *Compares to NEG
             BEQ     isNEG
             BRA     endNEG
+
+compare_LEA
+            CMP.W   #lea_code,D2    *Compares to LEA
+            BEQ     isLEA
+            BRA     endLEA
 
 *If compare is successful, we go to one of the isX
 isNOP       BSR     outaddress      *prints current address
@@ -519,6 +525,13 @@ isNEG
             MOVE.B  #'G',(A0)+
             MOVE.B  #' ',(A0)+
             BSR     EA_NEG
+            BRA     endOP
+
+isLEA
+            MOVE.B  #'L', (A0)+
+            MOVE.B  #'E', (A0)+
+            MOVE.B  #'A', (A0)+
+            MOVE.B  #' ', (A0)+
             BRA     endOP
 
 
@@ -1763,6 +1776,7 @@ BRAstring   DC.B    'BRA',0     *BRA string
 JSRstring   DC.B    'JSR',0     *JSR string
 RTSstring   DC.B    'RTS',0     *RTS string
 NEGstring   DC.B    'NEG ',0     *NEG string
+LEAstring   DC.B    'LEA ',0    *LEA string
 
 
 
@@ -1838,6 +1852,7 @@ bra_code    EQU     %0110000000000000   *Binary of BRA
 jsr_code    EQU     %0100111010000000   *Binary of JSR
 rts_code    EQU     %0100111001110101   *Binary of RTS
 neg_code    EQU     %0100010000000000   *Binary of NEG
+lea_code    EQU     %0100000111000000   *Binary of LEA
 *EA EQU's
 
 OUTPUT_START EQU     $0000A000
@@ -1963,6 +1978,7 @@ BitMask5to5
 
 
     END    START        ; last line of source
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
