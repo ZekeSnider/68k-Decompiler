@@ -261,42 +261,57 @@ isNOP       BSR     outaddress      *prints current address
             TRAP    #15
             BRA     endOP            
 isEOR       BSR     outaddress      *prints current address
-            LEA     EORstring,A1    *Loads EORstring for printing
+            BSR     BitMask6to8     *Masking size bits
+            MOVE.B  D7,D3           *Moving result to D3
             MOVE.B  #'E',(A0)+
             MOVE.B  #'O',(A0)+
             MOVE.B  #'R',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_EOR
             BRA     endOP            
 isORI       BSR     outaddress      *prints current address
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.B  D7,D3           *Moving result to D3
             MOVE.B  #'O',(A0)+
             MOVE.B  #'R',(A0)+
             MOVE.B  #'I',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_ORI
             BRA     endOP
 isOR        BSR     outaddress      *prints current address
+            BSR     BitMask6to8     *Masking size bits
+            MOVE.B  D7,D3           *Moving result to D3
             MOVE.B  #'O',(A0)+
             MOVE.B  #'R',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_OR
             BRA     endOP
 isADD       BSR     outaddress      *prints current address
             BSR     BitMask6to8     *Masking size bits
-            MOVE.B  D7,D3           *Movingresult to D3
+            MOVE.B  D7,D3           *Moving result to D3
             MOVE.B  #'A',(A0)+
             MOVE.B  #'D',(A0)+
             MOVE.B  #'D',(A0)+
             MOVE.B  #'.',(A0)+
-            BSR     checkSize
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_ADD
             BRA     endOP
 isADDA      BSR     outaddress      *prints current address
+            BSR     BitMask6to8     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'A',(A0)+
             MOVE.B  #'D',(A0)+
             MOVE.B  #'D',(A0)+
             MOVE.B  #'A',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_ADDA
             BRA     endOP
@@ -306,11 +321,15 @@ isMOVEM     BSR     outaddress      *prints current address
             TRAP    #15
             BRA     endOP
 isMOVEA     BSR     outaddress      *prints current address
+            BSR     BitMask12to13   *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'M',(A0)+
             MOVE.B  #'O',(A0)+
             MOVE.B  #'V',(A0)+
             MOVE.B  #'E',(A0)+
             MOVE.B  #'A',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_MOVEA
             BRA     endOP
@@ -327,20 +346,25 @@ isMOVE      BSR     outaddress      *prints current address
             BSR     EA_MOVE
             BRA     endOP
 isSUB       BSR     outaddress      *prints current address
+            BSR     BitMask6to8     *Masking size bits
+            MOVE.B  D7,D3           *Moving result to D3
             MOVE.B  #'S',(A0)+
             MOVE.B  #'U',(A0)+
             MOVE.B  #'B',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_SUB
             BRA     endOP
 isSUBQ      BSR     outaddress      *prints current address
-
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.B  D7,D3           *Moving result to D3
             MOVE.B  #'S',(A0)+
             MOVE.B  #'U',(A0)+
             MOVE.B  #'B',(A0)+
             MOVE.B  #'Q',(A0)+
             MOVE.B  #'.',(A0)+
-
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_SUBQ
             BRA     endOP
@@ -360,19 +384,25 @@ isDIVS      BSR     outaddress      *prints current address
             MOVE.B  #' ',(A0)+
             BRA     endOP
 isCMP       BSR     outaddress      *prints current address
+            BSR     BitMask6to8     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'C',(A0)+
             MOVE.B  #'M',(A0)+
             MOVE.B  #'P',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize      *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_CMP
             BRA     endOP
 isCMPI      BSR     outaddress      *prints current address
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'C',(A0)+
             MOVE.B  #'M',(A0)+
             MOVE.B  #'P',(A0)+
             MOVE.B  #'I',(A0)+
             MOVE.B  #'.',(A0)+
-
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
             BSR     EA_CMPI
             BRA     endOP
@@ -479,6 +509,18 @@ checkSize
             CMP.W   #%000,D3        *Compares size bits and calls proper function
             BEQ     Size000
 
+            CMP.W   #%00,D3        *Compares size bits and calls proper function
+            BEQ     Size00
+
+            CMP.W   #%01,D3        *Compares size bits and calls proper function
+            BEQ     Size01    
+
+            CMP.W   #%10,D3        *Compares size bits and calls proper function
+            BEQ     Size10    
+
+            CMP.W   #%11,D3        *Compares size bits and calls proper function
+            BEQ     Size11       
+
             CMP.W   #%001,D3
             BEQ     Size001
 
@@ -507,6 +549,27 @@ Size000     MOVE.B  #'B',(A0)+      *prints size to stack and moves return data 
             MOVE.B  #1,D4
             MOVE.B  #1,D5
             RTS
+
+Size00      MOVE.B  #'B',(A0)+   
+            MOVE.B  #1,D4
+            MOVE.B  #1,D5
+            RTS
+
+Size01      MOVE.B  #'W',(A0)+   
+            MOVE.B  #2,D4
+            MOVE.B  #1,D5
+            RTS
+
+Size10      MOVE.B  #'L',(A0)+   
+            MOVE.B  #3,D4
+            MOVE.B  #1,D5
+            RTS
+
+Size11      MOVE.B  #'W',(A0)+   
+            MOVE.B  #2,D4
+            MOVE.B  #1,D5
+            RTS
+
 
 Size001     MOVE.B  #'W',(A0)+
             MOVE.B  #2,D4
