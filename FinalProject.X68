@@ -383,6 +383,7 @@ isDIVS      BSR     outaddress      *prints current address
             MOVE.B  #'V',(A0)+
             MOVE.B  #'S',(A0)+
             MOVE.B  #' ',(A0)+
+            BSR     EA_DIVS
             BRA     endOP
 isCMP       BSR     outaddress      *prints current address
             BSR     BitMask6to8     *Masking size bits
@@ -408,11 +409,13 @@ isCMPI      BSR     outaddress      *prints current address
             BSR     EA_CMPI
             BRA     endOP
 isLSR       BSR     outaddress      *prints current address
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'L',(A0)+
             MOVE.B  #'S',(A0)+
             MOVE.B  #'R',(A0)+
             MOVE.B  #'.',(A0)+
-
+            BSR     checkSize       *Finding size, outputting it, and storing it            
             MOVE.B  #' ',(A0)+
             BRA     endOP
 isLSL       BSR     outaddress      *prints current address
@@ -422,26 +425,43 @@ isLSL       BSR     outaddress      *prints current address
             MOVE.B  #'.',(A0)+
 
             MOVE.B  #' ',(A0)+
+
             BRA     endOP
 isASR       BSR     outaddress      *prints current address
-            LEA     ASRstring,A1    *Loads ASRstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'A',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #'.',(A0)+
+
+            MOVE.B  #' ',(A0)+
+
             BRA     endOP 
 isASL       BSR     outaddress      *prints current address
-            LEA     ASLstring,A1    *Loads ASLstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'A',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #'L',(A0)+
+            MOVE.B  #'.',(A0)+
+
+            MOVE.B  #' ',(A0)+
+
             BRA     endOP
 isROR       BSR     outaddress      *prints current address
-            LEA     RORstring,A1    *Loads RORstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #'O',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #'.',(A0)+
+
+            MOVE.B  #' ',(A0)+
+
             BRA     endOP
 isROL       BSR     outaddress      *prints current address
-            LEA     ROLstring,A1    *Loads ROLstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #'O',(A0)+
+            MOVE.B  #'L',(A0)+
+            MOVE.B  #'.',(A0)+
+
+            MOVE.B  #' ',(A0)+
+
             BRA     endOP
 isBCLR      BSR     outaddress      *prints current address
             MOVE.B  #'B',(A0)+
@@ -1539,9 +1559,8 @@ EA_PARSE_ABSOLUTE_WORD_ADDRESS
 
 
 IO_GET_WORD
-      MOVE.W  (A5),D0         *Gets the data of where the pointer is at
+      MOVE.W  (A5),D2         *Gets the data of where the pointer is at
       ADDQ.W  #byte,A5        *Incrementing the pointer one word
-      MOVE.W  D0,D2           *Moves data to D2 to use
       BSR     n2asciiSTACK    *Branching to n2asciiSTACK to push the word to the stack
       RTS
 
