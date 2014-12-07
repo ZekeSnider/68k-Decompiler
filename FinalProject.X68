@@ -262,28 +262,43 @@ isNOP       BSR     outaddress      *prints current address
             BRA     endOP            
 isEOR       BSR     outaddress      *prints current address
             LEA     EORstring,A1    *Loads EORstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'E',(A0)+
+            MOVE.B  #'O',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_EOR
             BRA     endOP            
 isORI       BSR     outaddress      *prints current address
-            LEA     ORIstring,A1    *Loads ORIstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'O',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #'I',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_ORI
             BRA     endOP
 isOR        BSR     outaddress      *prints current address
-            LEA     ORstring,A1     *Loads ORstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'O',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_OR
             BRA     endOP
 isADD       BSR     outaddress      *prints current address
-            LEA     ADDstring,A1     *Loads ADDstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            BSR     BitMask6to8     *Masking size bits
+            MOVE.B  D7,D3           *Movingresult to D3
+            MOVE.B  #'A',(A0)+
+            MOVE.B  #'D',(A0)+
+            MOVE.B  #'D',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize
+            MOVE.B  #' ',(A0)+
+            BSR     EA_ADD
             BRA     endOP
 isADDA      BSR     outaddress      *prints current address
-            LEA     ADDAstring,A1   *Loads ADDstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'A',(A0)+
+            MOVE.B  #'D',(A0)+
+            MOVE.B  #'D',(A0)+
+            MOVE.B  #'A',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_ADDA
             BRA     endOP
 isMOVEM     BSR     outaddress      *prints current address
             LEA     MOVEMstring,A1  *Loads MOVEMstring for printing
@@ -291,54 +306,91 @@ isMOVEM     BSR     outaddress      *prints current address
             TRAP    #15
             BRA     endOP
 isMOVEA     BSR     outaddress      *prints current address
-            LEA     MOVEAstring,A1  *Loads MOVEAstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'M',(A0)+
+            MOVE.B  #'O',(A0)+
+            MOVE.B  #'V',(A0)+
+            MOVE.B  #'E',(A0)+
+            MOVE.B  #'A',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_MOVEA
             BRA     endOP
 isMOVE      BSR     outaddress      *prints current address
-            LEA     MOVEstring,A1   *Loads MOVEstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            BSR     BitMask12to13   *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
+            MOVE.B  #'M',(A0)+
+            MOVE.B  #'O',(A0)+
+            MOVE.B  #'V',(A0)+
+            MOVE.B  #'E',(A0)+
+            MOVE.B  #'.',(A0)+
+            BSR     checkSize       *Finding size, outputting it, and storing it
+            MOVE.B  #' ',(A0)+
+            BSR     EA_MOVE
             BRA     endOP
 isSUB       BSR     outaddress      *prints current address
-            LEA     SUBstring,A1    *Loads SUBstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #'U',(A0)+
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_SUB
             BRA     endOP
 isSUBQ      BSR     outaddress      *prints current address
-            LEA     SUBQstring,A1   *Loads SUBQstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #'U',(A0)+
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #'Q',(A0)+
+            MOVE.B  #'.',(A0)+
+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_SUBQ
             BRA     endOP
 isMULS      BSR     outaddress      *prints current address
-            LEA     MULSstring,A1   *Loads MULSstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'M',(A0)+
+            MOVE.B  #'U',(A0)+
+            MOVE.B  #'L',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_MULS
             BRA     endOP
 isDIVS      BSR     outaddress      *prints current address
-            LEA     DIVSstring,A1   *Loads DIVSstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'D',(A0)+
+            MOVE.B  #'I',(A0)+
+            MOVE.B  #'V',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isCMP       BSR     outaddress      *prints current address
-            LEA     CMPstring,A1    *Loads CMPstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'C',(A0)+
+            MOVE.B  #'M',(A0)+
+            MOVE.B  #'P',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_CMP
             BRA     endOP
 isCMPI      BSR     outaddress      *prints current address
-            LEA     CMPIstring,A1   *Loads CMPIstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'C',(A0)+
+            MOVE.B  #'M',(A0)+
+            MOVE.B  #'P',(A0)+
+            MOVE.B  #'I',(A0)+
+            MOVE.B  #'.',(A0)+
+
+            MOVE.B  #' ',(A0)+
+            BSR     EA_CMPI
             BRA     endOP
 isLSR       BSR     outaddress      *prints current address
-            LEA     LSRstring,A1    *Loads LSRstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'L',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #'.',(A0)+
+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isLSL       BSR     outaddress      *prints current address
-            LEA     LSLstring,A1    *Loads LSLstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'L',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #'L',(A0)+
+            MOVE.B  #'.',(A0)+
+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isASR       BSR     outaddress      *prints current address
             LEA     ASRstring,A1    *Loads ASRstring for printing
@@ -361,44 +413,53 @@ isROL       BSR     outaddress      *prints current address
             TRAP    #15
             BRA     endOP
 isBCLR      BSR     outaddress      *prints current address
-            LEA     BCLRstring,A1   *Loads BCLRstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #'C',(A0)+
+            MOVE.B  #'L',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isBCS       BSR     outaddress      *prints current address
-            LEA     BCSstring,A1    *Loads BCSstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #'C',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isBGE       BSR     outaddress      *prints current address
-            LEA     BGEstring,A1    *Loads BGEstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #'G',(A0)+
+            MOVE.B  #'E',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isBLT       BSR     outaddress      *prints current address
-            LEA     BLTstring,A1    *Loads BLTstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #'L',(A0)+
+            MOVE.B  #'T',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isBVC       BSR     outaddress      *prints current address
-            LEA     BVCstring,A1    *Loads BVCstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #'V',(A0)+
+            MOVE.B  #'C',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isBRA       BSR     outaddress      *prints current address
-            LEA     BRAstring,A1    *Loads BRAstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #'A',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isJSR       BSR     outaddress      *prints current address
-            LEA     JSRstring,A1    *Loads JSRstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'J',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isRTS       BSR     outaddress      *prints current address
-            LEA     RTSstring,A1    *Loads RTSstring for printing
-            MOVE.B  #13,D0          *Sets up trap
-            TRAP    #15
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #'T',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #' ',(A0)+
             BRA     endOP
 isNEG       
 *BSR     outaddress      *prints current address
@@ -409,6 +470,76 @@ isNEG
             BSR     EA_NEG
             BRA     endOP
 
+
+*Input: size bits on D3
+*Prints size to stack
+*Returns size (1=byte, 2=word, 3=long) on D4
+*Returns mode (1=source, 2=destination) on D5
+checkSize
+            CMP.W   #%000,D3        *Compares size bits and calls proper function
+            BEQ     Size000
+
+            CMP.W   #%001,D3
+            BEQ     Size001
+
+            CMP.W   #%010,D3
+            BEQ     Size010
+
+            CMP.W   #%100,D3
+            BEQ     Size100
+
+            CMP.W   #%101,D3
+            BEQ     Size101
+
+            CMP.W   #%110,D3
+            BEQ     Size110
+
+            CMP.W   #%011,D3
+            BEQ     Size011
+
+            CMP.W   #%111,D3
+            BEQ     Size111
+
+            RTS
+
+
+Size000     MOVE.B  #'B',(A0)+      *prints size to stack and moves return data to D4,D5   
+            MOVE.B  #1,D4
+            MOVE.B  #1,D5
+            RTS
+
+Size001     MOVE.B  #'W',(A0)+
+            MOVE.B  #2,D4
+            MOVE.B  #1,D5
+            RTS
+
+Size010     MOVE.B  #'L',(A0)+
+            MOVE.B  #3,D4
+            MOVE.B  #1,D5
+            RTS
+
+Size100     MOVE.B  #'B',(A0)+
+            MOVE.B  #1,D4
+            MOVE.B  #2,D5
+            RTS
+
+Size101     MOVE.B  #'W',(A0)+
+            MOVE.B  #2,D4
+            MOVE.B  #2,D5
+            RTS
+
+Size110     MOVE.B  #'L',(A0)+
+            MOVE.B  #3,D4
+            MOVE.B  #2,D5
+            RTS
+
+Size011     MOVE.B  #'W',(A0)+
+            MOVE.B  #2,D4
+            MOVE.B  #1,D5
+
+Size111     MOVE.B  #'W',(A0)+
+            MOVE.B  #3,D4
+            MOVE.B  #1,D5
 
 *Masks to make comparisons easier
 compMask    MOVE.W  D0,D2           *Gets fresh copy of D0
@@ -550,18 +681,11 @@ printchar   MOVE.B  #6,D0           *Sets up Trap
             TRAP    #15
             BRA     n2acheck        *returns to n2ascii
 
-*--------------------------------*
-*     Written By: Zeke Snider    *
-*     CSS 422                    *
-*     Fall 2014                  *
-*     EA Section                 *
-*--------------------------------*
-
-
+*EA FUNCTIONS:
 *D0 is assumed to be input line
-*Assuming D2 is Addressing Mode
-*Assuming D3 is Register
-*D7 is used to store return values
+*Using D2 to store Addressing Mode
+*Using D3 to store Register
+*Using D7 to store return values
 
 *Input: D0 (Input Line)
 EA_NEG                              ;Parsing EA for NEG function
@@ -575,27 +699,62 @@ EA_NEG                              ;Parsing EA for NEG function
       CMP.L       #%001,D2           ;Address register direct is not a valid input for NEG
       BEQ         ERROR
 
-      CMP.L       #%111,D2           ;immediate data is not a valid input for NEG
-      CMP.L       #%100,D3
+      CMP.W       #%111,D2          ;Immediate Data is not a valid EA mode
+      BEQ         EA_BlOCK_IMMEDIATE
+
+      BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
+
+      RTS                           ;Returning to source
+
+*Input: D0 (Input Line)
+EA_EOR                              ;Parsing EA for EOR function
+      BSR         BitMask9to11      ;isolating source register
+      MOVE.L      D7,D3             ;moving result to D3
+      BSR         EA_PARSE_Dn       ;printing data register to A0 stack
+
+      MOVE.B      ',',(A0)+         ;pushing ", " to the stack.
+      MOVE.B      ' ',(A0)+
+
+      BSR         BitMask3to5       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating destination address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.L       #%001,D2          ;Address register direct is not a valid input for EOR
       BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
 
-      MOVE.B      #00,(A0)+          ;Terminating character
+      RTS                           ;Returning to source
+
+*Input: D0 (Input Line)
+EA_ADDA                              ;Parsing EA for ADDA function
+
+
+      BSR         BitMask3to5       ;isolating destination address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating destination address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
+
+      MOVE.B      ',',(A0)+         ;pushing ", " to the stack.
+      MOVE.B      ' ',(A0)+
+
+      BSR         BitMask9to11      ;isolating source register
+      MOVE.L      D7,D3             ;moving result to D3
+      BSR         EA_PARSE_An       ;printing data register to A0 stack
 
       RTS                           ;Returning to source
 
 
-*D0 is assumed to be input line
-*D1 is assumed to be input for opmode type
-*D7 is used to store the return value from the BitMasks
-*Assuming D2 is EA Addressing Mode
-*Assuming D3 is EA Register
-*D5 stores register
-
 *Input: D0 (input Line)
-*Input: D1 (OPMOde type (1 or 2))
-EA_OR                              ;Parsing EA for OR function
+*Input: D5 (OPMOde type (1 or 2))
+EA_OR                               ;Parsing EA for OR function
+      MOVE.B      D5,D1             ;moving input opmode type to D1
+      CLR.L       D5                ;clearing D5
 
       BSR         BitMask6to8       ;isolating register number
       MOVE.L      D7,D5             ;moving return value to D5
@@ -619,7 +778,7 @@ EA_OR                              ;Parsing EA for OR function
 *Called if the EA address field is a source operand
 EA_OR_SOURCE
       CMP.L       #%001,D2           ;Address register direct is not a valid input for EA Source
-      BEQ         ERRORg
+      BEQ         ERROR
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
@@ -676,20 +835,19 @@ EA_ORI                              ;Parsing EA for ORI function
       CMP.L       #%001,D2           ;Address register direct is not a valid input for ORI
       BEQ         ERROR
 
-      CMP.L       #%111,D2           ;immediate data is not a valid input for ORI
-      CMP.L       #%100,D3
-      BEQ         ERROR
+      CMP.W       #%111,D2          ;Immediate Data is not a valid EA mode
+      BEQ         EA_BlOCK_IMMEDIATE
 
       BSR         EA_PARSE_MODE     ;Calling parse mode function to write data to the stack
-
-      MOVE.B      #0,(A0)+          ;Terminating character
 
       RTS                           ;Returning to source
 
 
 *Input: D0 (input Line)
-*Input: D1 (OPMOde type (1 or 2))
+*Input: D5 (OPMOde type (1 or 2))
 EA_AND                              ;Parsing EA for AND function
+      MOVE.B      D5,D1             ;moving input opmode type to D1
+      CLR.L       D5                ;clearing D5
 
       BSR         BitMask9to11      ;isolating register number
       MOVE.L      D7,D5             ;moving return value to D5
@@ -769,9 +927,15 @@ EA_ANDI                             ;Parsing EA for ANDI function
       RTS                           ;Returning to source
 
 *Input: D0 (input Line)
-*Input: D1 (OPMOde type (1 or 2))
-*Input: D2 (Isbyte (0 or 1))
+*Input: D5 (OPMOde type (1 or 2))
+*Input: D4 (Size (1,2, or 3))
 EA_SUB                              ;Parsing EA for AND function
+      MOVE.B      D5,D1             ;moving input opmode type to D1
+      CLR.L       D5                ;clearing D5
+
+      MOVE.B      D4,D2             ;moving input opmode type to D2
+      CLR.L       D4                ;clearing D4
+
       MOVE.L      D2,D4             ;moving isbyte variable to D4
 
       BSR         BitMask9to11      ;isolating register number
@@ -788,8 +952,6 @@ EA_SUB                              ;Parsing EA for AND function
 
       CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
       BEQ         EA_AND_SOURCE
-
-      MOVE.B      #0,(A0)+          ;Terminating character
 
       RTS                           ;Returning to source
 
@@ -832,6 +994,60 @@ EA_SUB_DESTINATION
       RTS
 
 *Input: D0 (input Line)
+*Input: D5 (OPMOde type (1 or 2))
+*Input: D4 (Size (1,2, or 3))
+EA_ADD                              ;Parsing EA for ADD function
+      MOVE.B      D5,D1             ;moving input opmode type to D1
+      CLR.L       D5                ;clearing D5
+
+      BSR         BitMask9to11      ;isolating register number
+      MOVE.L      D7,D5             ;moving return value to D5
+
+      BSR         BitMask3to5       ;isolating EA address mode
+      MOVE.L      D7,D2             ;moving return value to D2
+
+      BSR         BitMask0to2       ;isloating EA address register
+      MOVE.L      D7,D3             ;Moving return value to D3
+
+      CMP.B       #1,D1             ;if the OPMode is type 1, the EA is the source
+      BEQ         EA_ADD_SOURCE      
+
+      CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
+      BEQ         EA_ADD_SOURCE
+
+      RTS                           ;Returning to source
+
+*Called if the EA address field is a source operand
+EA_ADD_SOURCE
+
+      BSR         EA_PARSE_MODE     ;outputing the source EA
+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
+
+      MOVE.L      D5,D7             ;Moving register number to D7
+      BSR         EA_PARSE_Dn       ;Outputting register
+
+      RTS
+
+*Called if the EA address field is a destinaton operand
+EA_ADD_DESTINATION
+      CMP.L       #%000,D2           ;Data register direct is not a valid input for EA destinaton
+      BEQ         ERROR
+
+      CMP.L       #%001,D2           ;Address register direct is not a valid input for EA destinaton
+      BEQ         ERROR
+
+      MOVE.L      D5,D7             ;Moving register to D7
+      BSR         EA_PARSE_Dn       ;Outputting register
+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
+
+      BSR         EA_PARSE_MODE     ;outputing the destination EA
+      RTS
+
+*Input: D0 (input Line)
 *Input: D1 (Isbyte (0 or 1))
 EA_SUBQ                             ;Parsing EA for SUBQ function
 
@@ -847,7 +1063,7 @@ EA_SUBQ                             ;Parsing EA for SUBQ function
       MOVE.B      #' ',(A0)+
 
       CMP.L       #1,D1             ;Address register direct is not a valid input for EA destinaton
-      CMP.L       #%001,D2           ;if it is a byte-operation
+      CMP.L       #%001,D2          ;if it is a byte-operation
       BRA         ERROR
       
       MOVE.L      D5,D7
@@ -1034,15 +1250,14 @@ EA_LS_MEMORY                        ;Parsing EA for LSR/LSL function for memory 
       BSR         BitMask0to2       ;isloating source address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      CMP.W       #%000,D2           ;Data Register direct is not a valid EA mode
+      CMP.W       #%000,D2          ;Data Register direct is not a valid EA mode
       BEQ         ERROR
 
-      CMP.W       #%001,D2           ;Address Register direct is not a valid EA Mode
+      CMP.W       #%001,D2          ;Address Register direct is not a valid EA Mode
       BEQ         ERROR
 
-      CMP.W       #%111,D2           ;Immediate Data
-      CMP.W       #%010,D3
-      BEQ         ERROR
+      CMP.W       #%111,D2          ;Immediate Data is not a valid EA mode
+      BEQ         EA_BlOCK_IMMEDIATE
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
@@ -1087,15 +1302,14 @@ EA_AS_MEMORY                        ;Parsing EA for ASR/ASL function for memory 
       BSR         BitMask0to2       ;isloating source address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      CMP.W       #%000,D2           ;Data Register direct is not a valid EA mode
+      CMP.W       #%000,D2          ;Data Register direct is not a valid EA mode
       BEQ         ERROR
 
-      CMP.W       #%001,D2           ;Address Register direct is not a valid EA Mode
+      CMP.W       #%001,D2          ;Address Register direct is not a valid EA Mode
       BEQ         ERROR
 
-      CMP.W       #%111,D2           ;Immediate Data
-      CMP.W       #%010,D3
-      BEQ         ERROR
+      CMP.W       #%111,D2          ;Immediate Data is not a valid EA mode
+      BEQ         EA_BlOCK_IMMEDIATE
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
@@ -1141,15 +1355,14 @@ EA_RO_MEMORY                        ;Parsing EA for ROR/ROL function for memory 
       BSR         BitMask0to2       ;isloating source address register
       MOVE.L      D7,D3             ;Moving return value to D3
 
-      CMP.W       #%000,D2           ;Data Register direct is not a valid EA mode
+      CMP.W       #%000,D2          ;Data Register direct is not a valid EA mode
       BEQ         ERROR
 
-      CMP.W       #%001,D2           ;Address Register direct is not a valid EA Mode
+      CMP.W       #%001,D2          ;Address Register direct is not a valid EA Mode
       BEQ         ERROR
 
-      CMP.W       #%111,D2           ;Immediate Data
-      CMP.W       #%010,D3
-      BEQ         ERROR
+      CMP.W       #%111,D2          ;Immediate Data is not a valid EA mode
+      BEQ         EA_BlOCK_IMMEDIATE
 
       BSR         EA_PARSE_MODE     ;parsing mode and register for the source   
 
@@ -1395,6 +1608,12 @@ EA_MOVE6    MOVE.W      #'6',D7
 
 EA_MOVE7    MOVE.W      #'7',D7
             RTS
+
+EA_BlOCK_IMMEDIATE                  ;Blocks immediate data when it not a valid EA mode
+      CMP.W       #%010,D3          ;Branches to ERROR if the EA mode is immediate dat
+      BEQ         ERROR
+
+      RTS                           ;If it's not immediate it will just return back
 
 IO_PRINT_OUTPUT
       MOVE.B    #%0,(A0)+           ;Adding terminating null to end of string
