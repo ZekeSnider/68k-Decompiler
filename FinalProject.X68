@@ -8,6 +8,7 @@
 START:                  ; first instruction of program
 * Put program code here
             NEG     D1              *Test NEG
+            ADD     D0,D1
             CLR.W   D0              *Clears D0
             LEA     cur_address,A5  *Load start address
             LEA     test_end,A6     *Load end address
@@ -292,7 +293,7 @@ isOR        BSR     outaddress      *prints current address
             MOVE.B  #' ',(A0)+
             BSR     EA_OR
             BRA     endOP
-isADD       BSR     outaddress      *prints current address
+isADD       *BSR     outaddress      *prints current address
             BSR     BitMask6to8     *Masking size bits
             MOVE.B  D7,D3           *Moving result to D3
             MOVE.B  #'A',(A0)+
@@ -942,7 +943,7 @@ EA_AND_SOURCE
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
 
-      MOVE.L      D5,D7             ;Moving register number to D7
+      MOVE.L      D5,D3             ;Moving register number to D3
       BSR         EA_PARSE_Dn       ;Outputting register
 
       RTS
@@ -1030,7 +1031,7 @@ EA_SUB_SOURCE
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
 
-      MOVE.L      D5,D7             ;Moving register number to D7
+      MOVE.L      D5,D3             ;Moving register number to D3
       BSR         EA_PARSE_Dn       ;Outputting register
 
       RTS
@@ -1043,14 +1044,14 @@ EA_SUB_DESTINATION
       CMP.L       #%001,D2           ;Address register direct is not a valid input for EA destinaton
       BEQ         ERROR
 
-      MOVE.L      D3,D6             ;backing up EA register to D6
-      MOVE.L      D5,D7             ;Moving register number to D3
+      MOVE.L      D3,D4             ;backing up EA register to D4
+      MOVE.L      D5,D3             ;Moving register number to D3
       BSR         EA_PARSE_Dn       ;Outputting register
 
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
 
-      MOVE.L      D6,D7             ;Moving EA register back
+      MOVE.L      D4,D3             ;Moving EA register back
       BSR         EA_PARSE_MODE     ;outputing the destination EA
 
 
@@ -1058,7 +1059,6 @@ EA_SUB_DESTINATION
 
 *Input: D0 (input Line)
 *Input: D5 (OPMOde type (1 or 2))
-*Input: D4 (Size (1,2, or 3))
 EA_ADD                              ;Parsing EA for ADD function
       MOVE.B      D5,D1             ;moving input opmode type to D1
       CLR.L       D5                ;clearing D5
@@ -1088,7 +1088,7 @@ EA_ADD_SOURCE
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
 
-      MOVE.L      D5,D7             ;Moving register number to D7
+      MOVE.L      D5,D3             ;Moving register number to D3
       BSR         EA_PARSE_Dn       ;Outputting register
 
       RTS
@@ -1101,11 +1101,15 @@ EA_ADD_DESTINATION
       CMP.L       #%001,D2           ;Address register direct is not a valid input for EA destinaton
       BEQ         ERROR
 
-      MOVE.L      D5,D7             ;Moving register to D7
+      MOVE.L      D3,D4             ;backing up EA address register
+
+      MOVE.L      D5,D3             ;Moving register to D3
       BSR         EA_PARSE_Dn       ;Outputting register
 
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
+
+      MOVE.L      D4,D3             ;moving address register back
 
       BSR         EA_PARSE_MODE     ;outputing the destination EA
       RTS
