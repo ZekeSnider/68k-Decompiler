@@ -299,7 +299,7 @@ isOR        BSR     outaddress      *prints current address
             MOVE.B  #' ',(A0)+
             BSR     EA_OR
             BRA     endOP
-isADD       *BSR     outaddress      *prints current address
+isADD       BSR     outaddress      *prints current address
             BSR     BitMask6to8     *Masking size bits
             MOVE.B  D7,D3           *Moving result to D3
             MOVE.B  #'A',(A0)+
@@ -519,7 +519,7 @@ isRTS       BSR     outaddress      *prints current address
             MOVE.B  #' ',(A0)+
             BRA     endOP
 isNEG       
-*BSR     outaddress      *prints current address
+            BSR     outaddress      *prints current address
             MOVE.B  #'N',(A0)+
             MOVE.B  #'E',(A0)+
             MOVE.B  #'G',(A0)+
@@ -662,13 +662,15 @@ maskShift   MOVE.W  D0,D2               *Gets a fresh copy of D0
             RTS
             
 *prints address
-outaddress  MOVE.W  D2,-(sp)        *Saves D2
+outaddress  MOVE.W  D0,-(sp)        *Saves D0
+            MOVE.W  D2,-(sp)        *Saves D2
             MOVE.W  A5,D2           *Moves current address to D2
             BSR     n2ascii         *prints current address
             MOVE.W  (sp)+,D2        *Loads D2
             MOVE.B  space,D1        *Loads ascii space in D1
             MOVE.B  #6,D0           *Sets up trap
             TRAP    #15
+            MOVE.W  (sp)+,D0        *Loads D0
             RTS
             
 *prints word 'DATA '            
@@ -961,8 +963,6 @@ EA_AND                              ;Parsing EA for AND function
       CMP.B       #2,D1             ;if the OPMode is type 2, the EA is the destination
       BEQ         EA_AND_SOURCE
 
-      MOVE.B      #0,(A0)+          ;Terminating character
-
       RTS                           ;Returning to source
 
 *Called if the EA address field is a source operand
@@ -1055,9 +1055,8 @@ EA_SUB                              ;Parsing EA for AND function
 *Called if the EA address field is a source operand
 EA_SUB_SOURCE
 
-      CMP.L       #%000,D2           ;Address register direct is not a valid input for EA source
-      CMP.L       #1,D4             ;if it is a byte-sized operation
-      BEQ         ERROR
+      CMP.L       #%000,D2           ;Address register direct is not a valid input for EA source if byte operation
+      BEQ         EA_SUB_BYTE_CHECK  ;checking if it is a byte operation. if it is, branch to error
 
       BSR         EA_PARSE_MODE     ;outputing the source EA
 
@@ -1068,6 +1067,12 @@ EA_SUB_SOURCE
       BSR         EA_PARSE_Dn       ;Outputting register
 
       RTS
+
+EA_SUB_BYTE_CHECK
+      CMP.L       #1,D4             ;if it is a byte-operation
+      BEQ         ERROR
+      RTS
+
 
 *Called if the EA address field is a destinaton operand
 EA_SUB_DESTINATION
@@ -1162,15 +1167,18 @@ EA_SUBQ                             ;Parsing EA for SUBQ function
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
 
-      CMP.L       #1,D1             ;Address register direct is not a valid input for EA destinaton
-      CMP.L       #%001,D2          ;if it is a byte-operation
-      BRA         ERROR
+      CMP.L       #1,D1              ;Address register direct is not a valid input for EA destinaton
+      BEQ         EA_SUBQ_BYTE_CHECK ;checking if it's a byte operation. if it is, branch to error.
       
       MOVE.L      D5,D7
       BSR         EA_PARSE_MODE       ;outputting Address register destination
 
       RTS                           ;Returning to source
 
+EA_SUBQ_BYTE_CHECK
+      CMP.L       #%001,D2          ;if it is a byte-operation
+      BEQ         ERROR
+      RTS
 
 *Input: D0 (input Line)
 EA_MOVE                             ;Parsing EA for MOVE function
@@ -1572,9 +1580,21 @@ EA_PARSE_ABSOLUTE_WORD_ADDRESS
 
 
 IO_GET_WORD
+      MOVE.W  D0,-(sp)        *Saves D0
+      MOVE.W  D1,-(sp)        *Saves D1
+      MOVE.W  D2,-(sp)        *Saves D2
+      MOVE.W  D3,-(sp)        *Saves D3
+      MOVE.W  D4,-(sp)        *Saves D4
+
       MOVE.W  (A5),D2         *Gets the data of where the pointer is at
       ADDQ.W  #byte,A5        *Incrementing the pointer one word
       BSR     n2asciiSTACK    *Branching to n2asciiSTACK to push the word to the stack
+
+      MOVE.W  (sp)+,D4        *Restores D4
+      MOVE.W  (sp)+,D3        *Restores D3
+      MOVE.W  (sp)+,D2        *Restores D2
+      MOVE.W  (sp)+,D1        *Restores D1
+      MOVE.W  (sp)+,D0        *Restores D0
       RTS
 
 
