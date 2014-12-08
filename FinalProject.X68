@@ -1,7 +1,7 @@
 *-----------------------------------------------------------
 * Title      :Group 6 68k Decompiler
 * Written by :Zeke Snider and Joseph Sturtevan
-* Date       :12/4/2014
+* Date       :12/7/2014
 * Description:Decompiler for CSS 422 Hardware
 *-----------------------------------------------------------
     ORG    $1000
@@ -424,51 +424,62 @@ isLSR       BSR     outaddress      *prints current address
             MOVE.B  #'.',(A0)+
             BSR     checkSize       *Finding size, outputting it, and storing it            
             MOVE.B  #' ',(A0)+
+            BSR     EA_LS_REGISTER
             BRA     endOP
 isLSL       BSR     outaddress      *prints current address
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'L',(A0)+
             MOVE.B  #'S',(A0)+
             MOVE.B  #'L',(A0)+
             MOVE.B  #'.',(A0)+
-
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
-
+            BSR     EA_LS_REGISTER
             BRA     endOP
 isASR       BSR     outaddress      *prints current address
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'A',(A0)+
             MOVE.B  #'S',(A0)+
             MOVE.B  #'R',(A0)+
             MOVE.B  #'.',(A0)+
-
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
-
+            BSR     EA_AS_REGISTER
             BRA     endOP 
 isASL       BSR     outaddress      *prints current address
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'A',(A0)+
             MOVE.B  #'S',(A0)+
             MOVE.B  #'L',(A0)+
             MOVE.B  #'.',(A0)+
-
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
-
+            BSR     EA_AS_REGISTER
             BRA     endOP
 isROR       BSR     outaddress      *prints current address
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'R',(A0)+
             MOVE.B  #'O',(A0)+
             MOVE.B  #'R',(A0)+
             MOVE.B  #'.',(A0)+
-
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
-
+            BSR     EA_RO_REGISTER
             BRA     endOP
 isROL       BSR     outaddress      *prints current address
+            BSR     BitMask6to7     *Masking size bits
+            MOVE.W  D7,D3           *Moving result to D3
             MOVE.B  #'R',(A0)+
             MOVE.B  #'O',(A0)+
             MOVE.B  #'L',(A0)+
             MOVE.B  #'.',(A0)+
-
+            BSR     checkSize       *Finding size, outputting it, and storing it
             MOVE.B  #' ',(A0)+
-
+            BSR     EA_RO_REGISTER
             BRA     endOP
 isBCLR      BSR     outaddress      *prints current address
             MOVE.B  #'B',(A0)+
@@ -1330,15 +1341,25 @@ EA_LS_REGISTER                      ;Parsing EA for LSR/LSL function for registe
       MOVE.L      D7,D3             ;Moving return value to D3
 
       BSR         EA_PARSE_REGISTER ;parsing the count/register field
-      MOVE.L      D7,D5             ;moving result to D5
+      MOVE.L      D7,D4             ;moving result to D4
 
       CMP.W       #%1,D5             ;if the i/r value is 1 display the data register
-      MOVE.B      #'D',(A0)+
+      BEQ         EA_LS_REGISTER_D
 
       CMP.W       #%0,D5             ;if the i/r value is 0 display immediate data
-      MOVE.B      #'#',(A0)+
+      BEQ         EA_LS_REGISTER_DIRECT
 
-      MOVE.B      D5,(A0)+          ;pushing the register number or immediate data to the stack
+
+EA_LS_REGISTER_D
+      MOVE.B      #'D',(A0)+
+      BRA         EA_LS_REGISTER_AFTERBREAK
+
+EA_LS_REGISTER_DIRECT
+      MOVE.B      #'#',(A0)+
+      BRA         EA_LS_REGISTER_AFTERBREAK     
+
+EA_LS_REGISTER_AFTERBREAK
+      MOVE.B      D4,(A0)+          ;pushing the register number or immediate data to the stack
 
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
@@ -1382,15 +1403,24 @@ EA_AS_REGISTER                      ;Parsing EA for ASR/ASL function for registe
       MOVE.L      D7,D3             ;Moving return value to D3
 
       BSR         EA_PARSE_REGISTER ;parsing the count/register field
-      MOVE.L      D7,D5             ;moving result to D5
+      MOVE.L      D7,D4             ;moving result to D4
 
       CMP.W       #%1,D5             ;if the i/r value is 1 display the data register
-      MOVE.B      #'D',(A0)+
+      BEQ         EA_AS_REGISTER_D
 
       CMP.W       #%0,D5             ;if the i/r value is 0 display immediate data
+      BEQ         EA_AS_REGISTER_DIRECT
+
+
+EA_AS_REGISTER_D
+      MOVE.B      #'D',(A0)+
+      BRA         EA_AS_REGISTER_AFTERBREAK
+
+EA_AS_REGISTER_DIRECT
       MOVE.B      #'#',(A0)+
 
-      MOVE.B      D5,(A0)+          ;pushing the register number or immediate data to the stack
+EA_AS_REGISTER_AFTERBREAK
+      MOVE.B      D4,(A0)+          ;pushing the register number or immediate data to the stack
 
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
@@ -1435,15 +1465,23 @@ EA_RO_REGISTER                      ;Parsing EA for ROR/ROL function for registe
       MOVE.L      D7,D3             ;Moving return value to D3
 
       BSR         EA_PARSE_REGISTER ;parsing the count/register field
-      MOVE.L      D7,D5             ;moving result to D5
+      MOVE.L      D7,D4             ;moving result to D4
 
       CMP.W       #%1,D5             ;if the i/r value is 1 display the data register
-      MOVE.B      #'D',(A0)+
+      BEQ         EA_RO_REGISTER_D
 
       CMP.W       #%0,D5             ;if the i/r value is 0 display immediate data
+      BEQ         EA_RO_REGISTER_DIRECT
+
+EA_RO_REGISTER_D
+      MOVE.B      #'D',(A0)+
+      BRA         EA_RO_REGISTER_AFTERBREAK
+
+EA_RO_REGISTER_DIRECT
       MOVE.B      #'#',(A0)+
 
-      MOVE.W      D5,(A0)+          ;pushing the register number or immediate data to the stack
+EA_RO_REGISTER_AFTERBREAK
+      MOVE.B      D4,(A0)+          ;pushing the register number or immediate data to the stack
 
       MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
       MOVE.B      #' ',(A0)+
@@ -1639,7 +1677,6 @@ n2asciiSTACK2     MOVE.W  D2,D3           *Moves to D3 to work on there
                   BEQ     pushF
 
                   BRA n2acheckSTACK       *Branching past output if none were equal
-                  
 push0       MOVE.B  #'0',(A0)+
             BRA n2acheckSTACK
 push1       MOVE.B  #'1',(A0)+
@@ -1672,7 +1709,6 @@ pushE       MOVE.B  #'E',(A0)+
             BRA n2acheckSTACK         
 pushF       MOVE.B  #'F',(A0)+
             BRA n2acheckSTACK
-
 n2acheckSTACK     SUB.B   #4,D4           *Decrements our counter
                   CMP.B   #0,D4           *Checks if counter reached 0
                   BGE     n2asciiSTACK2   *Returns to top of loop to continue        
@@ -1999,7 +2035,7 @@ BitMask5to5
       MOVE.L   #%0000000000100000,D6       ;Storing the mask to D6
       MOVE.L   D0,D7                      ;Copying the input line to D7
       AND.L    D6,D7                      ;ANDING the Data
-      LSR      #3,D7                      ;Shifting the irrelavant bits out the right side
+      LSR      #5,D7                      ;Shifting the irrelavant bits out the right side
       RTS
 
 
