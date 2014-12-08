@@ -9,6 +9,7 @@ START:                  ; first instruction of program
 * Put program code here
             NEG     D1              *Test NEG
             ADD     D0,D1
+            MOVE.W  #04,D3
             CLR.W   D0              *Clears D0
             LEA     cur_address,A5  *Load start address
             LEA     test_end,A6     *Load end address
@@ -1586,6 +1587,7 @@ IO_GET_WORD
       MOVE.W  D3,-(sp)        *Saves D3
       MOVE.W  D4,-(sp)        *Saves D4
 
+      ADDQ.W  #byte,A5        *Incrementing A5 to get the next word section
       MOVE.W  (A5),D2         *Gets the data of where the pointer is at
       ADDQ.W  #byte,A5        *Incrementing the pointer one word
       BSR     n2asciiSTACK    *Branching to n2asciiSTACK to push the word to the stack
@@ -1635,43 +1637,48 @@ n2asciiSTACK2     MOVE.W  D2,D3           *Moves to D3 to work on there
                   BEQ     pushE
                   CMP.B   #$F,D3          *Checks if D3 is equal to F
                   BEQ     pushF
+
+                  BRA n2acheckSTACK       *Branching past output if none were equal
+                  
+push0       MOVE.B  #'0',(A0)+
+            BRA n2acheckSTACK
+push1       MOVE.B  #'1',(A0)+
+            BRA n2acheckSTACK
+push2       MOVE.B  #'2',(A0)+
+            BRA n2acheckSTACK
+push3       MOVE.B  #'3',(A0)+
+            BRA n2acheckSTACK
+push4       MOVE.B  #'4',(A0)+
+            BRA n2acheckSTACK
+push5       MOVE.B  #'5',(A0)+
+            BRA n2acheckSTACK
+push6       MOVE.B  #'6',(A0)+
+            BRA n2acheckSTACK
+push7       MOVE.B  #'7',(A0)+
+            BRA n2acheckSTACK
+push8       MOVE.B  #'8',(A0)+
+            BRA n2acheckSTACK
+push9       MOVE.B  #'9',(A0)+
+            BRA n2acheckSTACK
+pushA       MOVE.B  #'A',(A0)+
+            BRA n2acheckSTACK
+pushB       MOVE.B  #'B',(A0)+
+            BRA n2acheckSTACK
+pushC       MOVE.B  #'C',(A0)+
+            BRA n2acheckSTACK
+pushD       MOVE.B  #'D',(A0)+
+            BRA n2acheckSTACK
+pushE       MOVE.B  #'E',(A0)+
+            BRA n2acheckSTACK         
+pushF       MOVE.B  #'F',(A0)+
+            BRA n2acheckSTACK
+
 n2acheckSTACK     SUB.B   #4,D4           *Decrements our counter
                   CMP.B   #0,D4           *Checks if counter reached 0
                   BGE     n2asciiSTACK2   *Returns to top of loop to continue        
                   RTS                     *Else return to caller
 
-push0       MOVE.B  #'0',(A0)+
-            RTS
-push1       MOVE.B  #'1',(A0)+
-            RTS
-push2       MOVE.B  #'2',(A0)+
-            RTS
-push3       MOVE.B  #'3',(A0)+
-            RTS
-push4       MOVE.B  #'4',(A0)+
-            RTS
-push5       MOVE.B  #'5',(A0)+
-            RTS
-push6       MOVE.B  #'6',(A0)+
-            RTS
-push7       MOVE.B  #'7',(A0)+
-            RTS
-push8       MOVE.B  #'8',(A0)+
-            RTS
-push9       MOVE.B  #'9',(A0)+
-            RTS
-pushA       MOVE.B  #'A',(A0)+
-            RTS
-pushB       MOVE.B  #'B',(A0)+
-            RTS
-pushC       MOVE.B  #'C',(A0)+
-            RTS
-pushD       MOVE.B  #'D',(A0)+
-            RTS
-pushE       MOVE.B  #'E',(A0)+
-            RTS         
-pushF       MOVE.B  #'F',(A0)+
-            RTS
+
 
 *Converts a register number to ascii number and stores to D7 
 *Input:  D3 (Register Number)
