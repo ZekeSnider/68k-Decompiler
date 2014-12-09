@@ -1304,17 +1304,24 @@ EA_ADD_DESTINATION
 *Input: D1 (Isbyte (0 or 1))
 EA_SUBQ                             ;Parsing EA for SUBQ function
 
+      BSR         BitMask9to11
+      MOVE.L      D7,D3
+
+      BSR         EA_PARSE_REGISTER
+
+      MOVE.B      #'#',(A0)+
+      MOVE.B      D7,(A0)+
+
+
+      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
+      MOVE.B      #' ',(A0)+
+
       BSR         BitMask3to5       ;isolating destination address mode
       MOVE.L      D7,D2             ;moving return value to D2
 
       BSR         BitMask0to2       ;isloating destination address register
       MOVE.L      D7,D3             ;Moving return value to D3
-
-      BSR         EA_PARSE_IMMEDIATE_DATA          
-
-      MOVE.B      #',',(A0)+        ;pushing ", " to the stack.
-      MOVE.B      #' ',(A0)+
-
+      
       CMP.L       #1,D1              ;Address register direct is not a valid input for EA destinaton
       BEQ         EA_SUBQ_BYTE_CHECK ;checking if it's a byte operation. if it is, branch to error.
       
@@ -1322,6 +1329,7 @@ EA_SUBQ                             ;Parsing EA for SUBQ function
       BSR         EA_PARSE_MODE       ;outputting Address register destination
 
       RTS                           ;Returning to source
+
 
 EA_SUBQ_BYTE_CHECK
       CMP.L       #%001,D2          ;if it is a byte-operation
