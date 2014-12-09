@@ -7,14 +7,34 @@
     ORG    $1000
 START:                  ; first instruction of program
 * Put program code here
-            NEG     D1              *Test NEG
-            ADD     D0,D1
-            MOVE.W  #04,D3
-            CLR.W   D0              *Clears D0
-            LEA     cur_address,A5  *Load start address
-            LEA     test_end,A6     *Load end address
+            LEA     greeting0,A1    *Loads greeting into A1
+            MOVE.B  #13,D0          *Sets up trap
+            TRAP    #15
+enterStart  LEA     greeting1,A1    *Loads prompt into A1
+            MOVE.B  #14,D0          *Sets up trap
+            TRAP    #15
+            LEA     OUTPUT_START,A1 *Puts input into OUTPUT_START location
+            MOVE.B  #2,D0           *Sets up trap to accept input of starting address
+            TRAP    #15
+            BSR     strToHex        *Converts the input to HEX
+            MOVE.L  D1,A5           *Load start address
+            LEA     greeting2,A1    *Loads prompt into A1
+            MOVE.B  #14,D0          *Sets up trap
+            TRAP    #15
+            LEA     OUTPUT_START,A1 *Puts input into OUTPUT_START location
+            MOVE.B  #2,D0           *Sets up trap to accept input of endinging address
+            TRAP    #15
+            BSR     strToHex        *Converts the input to HEX
+            MOVE.L  D1,A6           *Load ending address
+            CMP.L   A5,A6           *Checks to make sure A6 is after A5
+            BLE     invalidAddress  *Makes you resubmit addresses if input is invalid
+            MOVE.B  #0,-(sp)        *Moves initial line counter onto stack
         
-loop        MOVE.W  (A5),D0         *Gets the data of where the pointer is at
+loop        CLR.L   D0              *Gives fresh D0
+            MOVE.B  (sp)+,D0        *Moves line counter into D0 to check
+            BSR     linecounter     *Checks line count to see if we need to pause
+            MOVE.B  D0,-(sp)        *Moves line counter back to stack
+            MOVE.W  (A5),D0         *Gets the data of where the pointer is at
             LEA     OUTPUT_START,A0 *Sets up output for EA
             BSR     getOP           *Gets the data at add
             ADDQ.W  #byte,A5        *Incrementing the pointer one word
@@ -539,14 +559,130 @@ isNEG
             BSR     EA_NEG
             BRA     endOP
 
-isLEA
+isLEA 
+            BSR     outaddress      *prints current address
             MOVE.B  #'L', (A0)+
             MOVE.B  #'E', (A0)+
             MOVE.B  #'A', (A0)+
             MOVE.B  #' ', (A0)+
+            ADDQ    #byte,A5
+            ADDQ    #byte,A5         *increments our program counter twice, LEA incomplete
             BRA     endOP
 
+*Converts string user input at A1 to HEX
+*D1 is length of string, D2 is completed HEX, which will be returned to caller in D1
+strToHex
+            CMP.B   #0,D1           *Compares length of string to 0
+            BLE     endStrToHex     *Go to return line if string is less than 0
+            LSL     #4,D2
+            SUB     #1,D1           *Decrements D1
+strToHexLoop 
+            MOVE.B  (A1)+,D3        *Uses D3 as temp variable
+            CMP.B   #48,D3          *Checks if 0
+            BEQ     is0
+            CMP.B   #49,D3          *Checks if 1
+            BEQ     is1
+            CMP.B   #50,D3          *Checks if 2
+            BEQ     is2
+            CMP.B   #51,D3          *Checks if 3
+            BEQ     is3
+            CMP.B   #52,D3          *Checks if 4
+            BEQ     is4
+            CMP.B   #53,D3          *Checks if 5
+            BEQ     is5
+            CMP.B   #54,D3          *Checks if 6
+            BEQ     is6
+            CMP.B   #55,D3          *Checks if 7
+            BEQ     is7
+            CMP.B   #56,D3          *Checks if 8
+            BEQ     is8
+            CMP.B   #57,D3          *Checks if 9
+            BEQ     is9
+            CMP.B   #65,D3          *Checks if A
+            BEQ     isA
+            CMP.B   #97,D3          *Checks if a
+            BEQ     isA
+            CMP.B   #66,D3          *Checks if B
+            BEQ     isB
+            CMP.B   #98,D3          *Checks if b
+            BEQ     isB
+            CMP.B   #67,D3          *Checks if C
+            BEQ     isC
+            CMP.B   #99,D3          *Checks if c
+            BEQ     isC
+            CMP.B   #68,D3          *Checks if D
+            BEQ     isD
+            CMP.B   #100,D3         *Checks if d
+            BEQ     isD
+            CMP.B   #69,D3          *Checks if E
+            BEQ     isE
+            CMP.B   #101,D3         *Checks if e
+            BEQ     isE
+            CMP.B   #70,D3          *Checks if F
+            BEQ     isF
+            CMP.B   #102,D3         *Checks if f
+            BEQ     isF
+            BRA     invalidAddress  *Invalid address entered
+endStrToHex MOVE.L  D2,D1           *Moves D2 to D1 for returning
+            CLR.L   D2
+            CLR.L   D3              *Clears D2 and D3
+            RTS
 
+is0         ADD.B   #$0,D2
+            BRA     strToHex
+is1         ADD.B   #$1,D2
+            BRA     strToHex
+is2         ADD.B   #$2,D2
+            BRA     strToHex
+is3         ADD.B   #$3,D2
+            BRA     strToHex
+is4         ADD.B   #$4,D2
+            BRA     strToHex
+is5         ADD.B   #$5,D2
+            BRA     strToHex
+is6         ADD.B   #$6,D2
+            BRA     strToHex
+is7         ADD.B   #$7,D2
+            BRA     strToHex
+is8         ADD.B   #$8,D2
+            BRA     strToHex
+is9         ADD.B   #$9,D2
+            BRA     strToHex
+isA         ADD.B   #$A,D2
+            BRA     strToHex
+isB         ADD.B   #$B,D2
+            BRA     strToHex
+isC         ADD.B   #$C,D2
+            BRA     strToHex
+isD         ADD.B   #$D,D2
+            BRA     strToHex
+isE         ADD.B   #$E,D2
+            BRA     strToHex
+isF         ADD.B   #$F,D2
+            BRA     strToHex
+
+invalidAddress
+            LEA     invalidStr,A1   *Loads string
+            MOVE.B  #13,D0          *Sets up trap
+            TRAP    #15
+            BRA     enterStart
+
+*Keeps track of the number of lines on the page
+lineCounter
+            CMPI.W  #pageLength,D0  *Compares count to pageLength
+            BGT     pauseProgram    *Pause program
+            ADDQ    #1,D0           *If not at pageLength, increment counter
+pauseReturn 
+            RTS
+pauseProgram
+            LEA     enterToContinue,A1  *Loads message into A1
+            MOVE.B  #14,D0              *Prints message
+            TRAP    #15
+            MOVE.B  #4,D0
+            TRAP    #15                 *Pauses by waiting for integer input
+            CLR.L   D1                  *Clears input, because we don't really care about it
+            MOVE.B  #0,D0               *resets line counter to 0
+            BRA     pauseReturn
 *Input: size bits on D3
 *Prints size to stack
 *Returns size (1=byte, 2=word, 3=long) on D4
@@ -1806,8 +1942,15 @@ byte        EQU     2           *How much to move the search address.
 cur_address EQU     $00001000   *Start of search
 test_end    EQU     $00001004   *End of search
 mydata      REG     D0-D7/A0-A6  *Used for pushing registers to stack
+pageLength  EQU     20          *Each page is 20 lines (decimal)
 
 *Strings for I/O
+greeting0   DC.B    'Welcome to Zeke Snider and Joseph Sturtevant',39,'s 422 Final Project',0
+greeting1   DC.B    'Please enter a starting address: ',0
+greeting2   DC.B    'Please enter an ending address: ',0
+invalidStr  DC.B    'Invalid input',0
+enterToContinue DC.B    'Hit enter to continue...',0
+*Old, were used for OP code testing, not used in final project
 datastring  DC.B    'DATA ',0   *Data string
 NOPstring   DC.B    'NOP',0     *NOP string
 EORstring   DC.B    'EOR',0     *EOR string
@@ -2041,6 +2184,7 @@ BitMask5to5
 
 
     END    START        ; last line of source
+
 
 *~Font name~Courier New~
 *~Font size~10~
