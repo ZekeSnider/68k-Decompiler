@@ -83,9 +83,9 @@ endshift
                                     *if we get here, the operation is unknown
             MOVE.W  D0,D2           *Restores D2 to default
             BSR     outaddress      *Data unknown, just print the address
-            BSR     isData          *And then the data
+printData   BSR     isData          *And then the data
 endOP       BSR     IO_PRINT_OUTPUT *Prints EA output
-            RTS                     *Returns to caller
+endOP1      RTS                     *Returns to caller
 
 *Comparison subroutines, broken up by Operation
 compare_NOP
@@ -260,6 +260,8 @@ compare_Bcc
             BEQ     isBVC
             CMP.W   #bra_code,D2    *Compares to BRA
             BEQ     isBRA
+            CMP.W   #BSR_code,D2    *Compares to BSR
+            BEQ     isBSR
             BRA     endBcc
 
 compare_JSR
@@ -537,6 +539,16 @@ isBRA       BSR     outaddress      *prints current address
             MOVE.B  #'R',(A0)+
             MOVE.B  #'A',(A0)+
             MOVE.B  #' ',(A0)+
+            CMP.B   #$00,D0         *Checks if there's immidiate data
+            BNE     isBRA1
+            BSR     calcDisplacement
+isBRA1      BRA     endOP
+isBSR       BSR     outaddress      *prints currentaddress
+            MOVE.B  #'B',(A0)+
+            MOVE.B  #'S',(A0)+
+            MOVE.B  #'R',(A0)+
+            MOVE.B  #' ',(A0)+
+            BSR     calcDisplacement
             BRA     endOP
 isJSR       BSR     outaddress      *prints current address
             MOVE.B  #'J',(A0)+
@@ -569,6 +581,13 @@ isLEA
             ADDQ    #byte,A5         *increments our program counter twice, LEA incomplete
             BRA     endOP
 
+calcDisplacement
+            BSR     IO_PRINT_OUTPUT1 *Prints Data
+            ADDQ    #byte,A5        *increments A5 to get next word
+            MOVE    (A5),D2         *Moves data to be worked on
+            ADD.L   A5,D2
+            BSR     isData1
+            RTS
 *Converts string user input at A1 to HEX
 *D1 is length of string, D2 is completed HEX, which will be returned to caller in D1
 strToHex
@@ -826,15 +845,15 @@ isData      LEA     datastring,A1   *Loads datastring for printing
             MOVE.B  #14,D0          *Sets up Trap
             TRAP    #15
 *prints the data
-            BSR     n2ascii         *Prints out the data
-            LEA     newline,A1      *Sets up trap for new line
-            MOVE.B  #14,D0
-            TRAP    #15
+isData1     BSR     n2ascii         *Prints out the data
+*            LEA     newline,A1      *Sets up trap for new line
+*            MOVE.B  #14,D0
+*            TRAP    #15
             RTS
 **************************************************
 *Takes the word hex in D2 and prints it to screen*
 **************************************************
-
+      
 n2ascii     MOVE.B  #12,D4          *Sets up D4 as counter.
 n2ascii2    MOVE.W  D2,D3           *Moves to D3 to work on there 
             LSR.W   D4,D3           
@@ -1930,8 +1949,22 @@ IO_PRINT_OUTPUT
       TRAP      #15
       RTS
 
+*Prints output without new line
+IO_PRINT_OUTPUT1
+      MOVE.B    #%0,(A0)+           ;Adding terminating null to end of string
+      LEA       OUTPUT_START,A0     ;Reseting A0 back to start of string
+      MOVEA.L   A0,A1               ;Moving to A1 for printing
+      CLR.L     D0                  ;clearing the trap byte
+      MOVE.B    #14,D0              ;printing string
+      TRAP      #15
+      RTS
+
 ERROR
       *TODO: handle illegal inputs
+      MOVE.B    #14,D0
+      LEA       outputError,A1
+      TRAP      #15
+      RTS
 
 end_search
 
@@ -1950,7 +1983,7 @@ byte        EQU     2           *How much to move the search address.
 cur_address EQU     $00001000   *Start of search
 test_end    EQU     $00001004   *End of search
 mydata      REG     D0-D7/A0-A6  *Used for pushing registers to stack
-pageLength  EQU     20          *Each page is 20 lines (decimal)
+pageLength  EQU     25          *Each page is 25 lines (decimal)
 
 *Strings for I/O
 greeting0   DC.B    'Welcome to Zeke Snider and Joseph Sturtevant',39,'s 422 Final Project',0
@@ -1958,6 +1991,7 @@ greeting1   DC.B    'Please enter a starting address: ',0
 greeting2   DC.B    'Please enter an ending address: ',0
 invalidStr  DC.B    'Invalid input',0
 enterToContinue DC.B    'Hit enter to continue...',0
+outputError DC.B    '*Invalid EA*',0
 *Old, were used for OP code testing, not used in final project
 datastring  DC.B    'DATA ',0   *Data string
 NOPstring   DC.B    'NOP',0     *NOP string
@@ -2063,6 +2097,7 @@ bge_code    EQU     %0110110000000000   *Binary of BGE
 blt_code    EQU     %0110110100000000   *Binary of BLT
 bvc_code    EQU     %0110100000000000   *Binary of BVC
 bra_code    EQU     %0110000000000000   *Binary of BRA
+bsr_code    EQU     %0110000100000000   *Binary of BSR
 jsr_code    EQU     %0100111010000000   *Binary of JSR
 rts_code    EQU     %0100111001110101   *Binary of RTS
 neg_code    EQU     %0100010000000000   *Binary of NEG
@@ -2192,6 +2227,7 @@ BitMask5to5
 
 
     END    START        ; last line of source
+
 
 
 *~Font name~Courier New~
